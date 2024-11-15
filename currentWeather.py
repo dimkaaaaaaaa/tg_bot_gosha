@@ -22,6 +22,10 @@ def get_weather(city):
             advice = "Снег, оденьтесь теплее."
         elif "ясно" in weather_description:
             advice = "Солнечно, одевайтесь легче."
+        if "пасмурно" in weather_description or "облачно" in weather_description:
+            advice = "Облачно, возьмите с собой куртку на случай прохлады."
+        elif "облачно с прояснениями" in weather_description:
+            advice = "Облачно с прояснениями, может быть немного светлее, но всё равно возьмите что-то тёплое."
 
         return  f"Погода в городе {city}:\n" \
                 f"Температура: {temperature}°C\n" \
