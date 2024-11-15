@@ -32,7 +32,7 @@ def get_weather_advice(description, temperature):
 
 # Функция для получения погоды с Яндекс API
 def get_weather(city): 
-    api_key = "c5b830d3-bf94-4bc0-a219-d020d629719f"
+    api_key = "demo_yandex_weather_api_key_ca6d09349ba0"
     url = f"https://api.weather.yandex.ru/v2/forecast"
     headers = {
         "X-Yandex-API-Key": api_key
