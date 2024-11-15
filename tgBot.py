@@ -73,7 +73,7 @@ def main():
     application.run_polling()
 
 
-#проверка работы
+#проверка работы yf gitHun lox
 
 #@app.route('/')
 #def index():
