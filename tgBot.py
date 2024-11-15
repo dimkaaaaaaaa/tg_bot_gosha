@@ -85,6 +85,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет! Что хочешь сделать?",
         reply_markup=reply_markup
     )
+    return
 
 # Функция запуска бота
 def main():
