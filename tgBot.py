@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+#from flask import Flask
 import logging
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 import currentTime
 
-app = Flask(__name__)
+#app = Flask(__name__)
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 
@@ -73,10 +73,10 @@ def main():
     application.run_polling()
 
 
-@app.route('/')
-def index():
-    return "Bot is running!"
+#@app.route('/')
+#def index():
+#    return "Bot is running!"
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+#    port = int(os.environ.get("PORT", 5000))
+#    app.run(host='0.0.0.0', port=port)
     main() 
