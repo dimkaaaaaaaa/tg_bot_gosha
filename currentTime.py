@@ -28,4 +28,4 @@ def get_current_time(city):
             city_time = datetime.now(pytz.timezone(timezone))
             return city_time.strftime("%H:%M:%S")
         else:
-            return "Не удалось определить временную зону."
+            return "Не удалось определить временную зону😔"
