@@ -64,13 +64,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         city = user_cities.get(user_id, "Moscow")
         curent_time = currentTime.get_current_time(city)
         now = datetime.now().strftime("%H:%M:%S")
-        await update.message.reply_text(f"Текущее время в {city}: {curent_time}")
+        await query.message.reply_text(f"Текущее время в {city}: {curent_time}")
     elif callback_data == "weather":
         city = user_cities.get(user_id, "Moscow")
         weather = currentWeather.get_weather(city)
-        await update.message.reply_text(weather)
+        await query.message.reply_text(weather)
     elif callback_data == "change_city":
-        await update.message.reply_text("Напишите название нового города на английском языке.")
+        await query.message.reply_text("Напишите название нового города на английском языке.")
         context.user_data["awaiting_city"] = True
 
 # Функция для старта
