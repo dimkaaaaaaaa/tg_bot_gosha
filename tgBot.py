@@ -7,7 +7,7 @@ import currentTime
 import currentWeather
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-user_cities = {} # Словарь для хранения городов пользователей
+user_cities = {}  # Словарь для хранения городов пользователей
 
 # Логирование
 logging.basicConfig(
@@ -21,6 +21,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user_id = update.message.from_user.id
     text = update.message.text
 
+    # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
     if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт"]:
         keyboard = [
             [InlineKeyboardButton("Текущее время", callback_data="time")],
@@ -32,12 +33,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "Привет! Что хочешь сделать?",
             reply_markup=reply_markup
         )
+        return  # Завершаем функцию, чтобы не выводить лишнее сообщение
 
+    # Если не "Привет", продолжаем выполнять остальные действия
     if text.lower() in ["текущее время", "время", "time"]:
         city = user_cities.get(user_id, "Moscow")
-        curent_time = currentTime.get_current_time(city)
-        now = datetime.now().strftime("%H:%M:%S")
-        await update.message.reply_text(f"Текущее время в {city}: {curent_time}")
+        current_time = currentTime.get_current_time(city)
+        await update.message.reply_text(f"Текущее время в {city}: {current_time}")
     elif text.lower() in ["погода в моем городе", "погода"]:
         city = user_cities.get(user_id, "Moscow")
         weather = currentWeather.get_weather(city)
@@ -62,15 +64,14 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if callback_data == "time":
         city = user_cities.get(user_id, "Moscow")
-        curent_time = currentTime.get_current_time(city)
-        now = datetime.now().strftime("%H:%M:%S")
-        await query.message.reply_text(f"Текущее время в {city}: {curent_time}")
+        current_time = currentTime.get_current_time(city)
+        await update.message.reply_text(f"Текущее время в {city}: {current_time}")
     elif callback_data == "weather":
         city = user_cities.get(user_id, "Moscow")
         weather = currentWeather.get_weather(city)
-        await query.message.reply_text(weather)
+        await update.message.reply_text(weather)
     elif callback_data == "change_city":
-        await query.message.reply_text("Напишите название нового города на английском языке.")
+        await update.message.reply_text("Напишите название нового города на английском языке.")
         context.user_data["awaiting_city"] = True
 
 # Функция для старта
@@ -85,7 +86,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет! Что хочешь сделать?",
         reply_markup=reply_markup
     )
-    return
 
 # Функция запуска бота
 def main():
