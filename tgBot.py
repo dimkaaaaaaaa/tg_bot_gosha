@@ -1,6 +1,6 @@
 import os
 import logging
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import datetime
 import requests
@@ -30,6 +30,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user_id = update.message.from_user.id
     text = update.message.text
 
+    if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт"]:
+        keyboard = [
+            [InlineKeyboardButton("Текущее время", callback_data="time")],
+            [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
+            [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(
+            "Привет! Что хочешь сделать?",
+            reply_markup=reply_markup
+        )
 
     if text == "Текущее время" or text == "Время" or text == "время":
         city = user_cities.get(user_id, "Moscow")
