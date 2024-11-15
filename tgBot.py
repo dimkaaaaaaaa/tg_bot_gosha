@@ -73,6 +73,8 @@ def main():
     application.run_polling()
 
 
+#проверка работы
+
 #@app.route('/')
 #def index():
 #    return "Bot is running!"
