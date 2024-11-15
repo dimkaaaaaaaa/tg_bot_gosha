@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Обработка кнопок
+# Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global user_cities
     user_id = update.message.from_user.id
@@ -55,6 +55,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
 
+# Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query: CallbackQuery = update.callback_query
     await query.answer()
@@ -65,13 +66,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if callback_data == "time":
         city = user_cities.get(user_id, "Moscow")
         current_time = currentTime.get_current_time(city)
-        await update.message.reply_text(f"Текущее время в {city}: {current_time}")
+        await query.message.reply_text(f"Текущее время в {city}: {current_time}")
     elif callback_data == "weather":
         city = user_cities.get(user_id, "Moscow")
         weather = currentWeather.get_weather(city)
-        await update.message.reply_text(weather)
+        await query.message.reply_text(weather)
     elif callback_data == "change_city":
-        await update.message.reply_text("Напишите название нового города на английском языке.")
+        await query.message.reply_text("Напишите название нового города на английском языке.")
         context.user_data["awaiting_city"] = True
 
 # Функция для старта
