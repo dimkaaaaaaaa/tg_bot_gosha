@@ -1,8 +1,12 @@
+import os
+from flask import Flask
 import logging
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import datetime
 import requests
+
+
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 
@@ -14,22 +18,35 @@ logger = logging.getLogger(__name__)
 
 # Функ для получения погоды
 def get_weather(city): 
+    
+    
     api_key = "bd5e378503939ddaee76f12ad7a97608"
     url =  f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru"
     response = requests.get(url).json()
     if response.get("main"):
-        temperature = response["main"]["temp"]
-        description = response["weather"][0]["description"]
-        return f"Температура: {temperature}°C\nПогодные условия: {description}"
+        main_data = response["main"]
+        weather_data = response["weather"][0]
+        wind_data = response["wind"]
+
+        temperature = main_data["temp"]
+        humidity = main_data["humidity"]
+        weather_description = weather_data["description"]
+        wind_speed = wind_data["speed"]
+
+        return  f"Погода в городе {city}:\n" \
+                f"Температура: {temperature}°C\n" \
+                f"Влажность: {humidity}%\n" \
+                f"Описание: {weather_description}\n" \
+                f"Скорость ветра: {wind_speed} м/с"
     else:
-        return "Не удалось получить погоду."
+        return "Город не найден. Проверьте правильность ввода."
 
 # Стартовое сообщение
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_keybord = [["Текущее время", "Погода в моем городе"]]
     await update.message.reply_text(
         "Привет! Выберите действие:",
-        reply_markup=ReplyKeyboardMarkup(reply_keybord, one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(reply_keybord, resize_keyboard=True, one_time_keyboard=True)
     ) 
 
 # Обработка кнопок
