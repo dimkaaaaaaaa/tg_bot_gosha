@@ -12,13 +12,22 @@ def get_weather(city):
 
         temperature = main_data["temp"]
         humidity = main_data["humidity"]
-        weather_description = weather_data["description"]
+        weather_description = response["weather"][0]["description"]
+        advice = ""
         wind_speed = wind_data["speed"]
+
+        if "дождь" in weather_description:
+            advice = "Возьмите зонт, на улице дождь."
+        elif "снег" in weather_description:
+            advice = "Снег, оденьтесь теплее."
+        elif "ясно" in weather_description:
+            advice = "Солнечно, одевайтесь легче."
 
         return  f"Погода в городе {city}:\n" \
                 f"Температура: {temperature}°C\n" \
                 f"Влажность: {humidity}%\n" \
-                f"Описание: {weather_description}\n" \
-                f"Скорость ветра: {wind_speed} м/с"
+                f"Описание: {weather_description.capitalize()}\n" \
+                f"Скорость ветра: {wind_speed} м/с" \
+                f"{advice}" 
     else:
         return "Город не найден. Проверьте правильность ввода."
