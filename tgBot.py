@@ -2,13 +2,18 @@ import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-from datetime import datetime
-import currentTime
-import currentWeather
+from datetime import datetime, timedelta
+import time
+import sched
+
+# Инициализация планировщика
+scheduler = sched.scheduler(time.time, time.sleep)
+
+# Словарь для хранения напоминаний
+reminders = {}
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 user_cities = {}  # Словарь для хранения городов пользователей
-reminders = []  # Список для хранения напоминаний
 
 # Логирование
 logging.basicConfig(
@@ -16,10 +21,44 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Функция для отправки напоминания
+async def send_reminder(update: Update, reminder_text: str) -> None:
+    user_id = update.message.from_user.id
+    await update.message.reply_text(f"Напоминание: {reminder_text}")
+
+# Обработка команды /reminder
+async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = update.message.text
+    try:
+        # Извлекаем дату и время из сообщения
+        parts = text.split(' ', 1)
+        if len(parts) < 2:
+            await update.message.reply_text("Ошибка: формат команды неверен. Используйте формат: /reminder DD.MM.YYYY HH:MM <текст напоминания>")
+            return
+
+        reminder_time_str = parts[0] + ' ' + parts[1][:5]  # Пример: 16.11.2024 05:03
+        reminder_text = parts[1][6:]  # Текст напоминания
+
+        # Парсим дату и время
+        reminder_time = datetime.strptime(reminder_time_str, "%d.%m.%Y %H:%M")
+
+        # Проверка, чтобы напоминание не было в прошлом
+        if reminder_time < datetime.now():
+            await update.message.reply_text("Ошибка: время напоминания в прошлом.")
+            return
+
+        # Сохраняем напоминание в словарь
+        reminders[update.message.from_user.id] = (reminder_time, reminder_text)
+
+        # Запланируем задачу
+        delay = (reminder_time - datetime.now()).total_seconds()
+        scheduler.enter(delay, 1, send_reminder, (update, reminder_text))
+        await update.message.reply_text(f"Напоминание установлено на {reminder_time_str}: {reminder_text}")
+    except ValueError:
+        await update.message.reply_text("Ошибка: неверный формат даты и времени. Используйте формат: DD.MM.YYYY HH:MM <текст напоминания>")
+
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    global user_cities
-    user_id = update.message.from_user.id
     text = update.message.text
 
     # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
@@ -39,19 +78,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Если не "Привет", продолжаем выполнять остальные действия
     if text.lower() in ["текущее время", "время", "time"]:
-        city = user_cities.get(user_id, "Moscow")
+        city = user_cities.get(update.message.from_user.id, "Moscow")
         current_time = currentTime.get_current_time(city)
         await update.message.reply_text(f"Текущее время в {city}: {current_time}")
     elif text.lower() in ["погода в моем городе", "погода"]:
-        city = user_cities.get(user_id, "Moscow")
+        city = user_cities.get(update.message.from_user.id, "Moscow")
         weather = currentWeather.get_weather(city)
         await update.message.reply_text(weather)
     elif text.lower() in ["изменить город"]:
         await update.message.reply_text("Напишите название нового города на английском языке.")
         context.user_data["awaiting_city"] = True
     elif context.user_data.get("awaiting_city"):
-        new_city = text
-        user_cities[user_id] = new_city
+        new_city = textuser_cities[update.message.from_user.id] = new_city
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город изменен на: {new_city}.")
     else:
@@ -76,31 +114,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif callback_data == "change_city":
         await query.message.reply_text("Напишите название нового города на английском языке.")
         context.user_data["awaiting_city"] = True
-    elif callback_data == "reminder":
-        await query.message.reply_text("Введите команду в формате: /reminder <дата и время> <сообщение>.")
-
-# Функция для добавления напоминания
-async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text = update.message.text
-    try:
-        parts = text.split(" ", 2)
-        reminder_time_str = parts[1]  # Дата и время
-        reminder_message = parts[2]   # Сообщение
-
-        # Преобразуем строку в объект datetime, учитывая формат "DD.MM.YYYY HH:MM"
-        reminder_time = datetime.strptime(reminder_time_str, "%d.%m.%Y %H:%M")
-
-        # Добавляем напоминание в список
-        reminders.append({
-            "time": reminder_time,
-            "message": reminder_message,
-            "user_id": update.message.from_user.id
-        })
-
-        # Ответ пользователю
-        await update.message.reply_text(f"Напоминание установлено на {reminder_time.strftime('%d.%m.%Y %H:%M')} с сообщением: {reminder_message}")
-    except ValueError as e:
-        await update.message.reply_text(f"Ошибка при обработке напоминания: {str(e)}. Убедитесь, что дата и время указаны в формате: DD.MM.YYYY HH:MM.")
 
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -116,17 +129,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
-# Функция запуска бота
+# Запуск бота
 def main():
     application = ApplicationBuilder().token(TOKEN).build()
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
-    application.add_handler(CommandHandler("reminder", reminder))  # Команда для напоминаний
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(CommandHandler("reminder", reminder))  # Команда для добавления напоминания
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))  # Обработка сообщений
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
 
     application.run_polling()
+
+    # Запуск планировщика
+    scheduler.run()
 
 if __name__ == "__main__":
     main()
