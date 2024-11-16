@@ -1,11 +1,13 @@
 import os
 import logging
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime
 import currentWeather
+from reminder_handler import initialize_db, add_reminder, get_due_reminders, delete_reminder
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 
@@ -14,6 +16,38 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Команда добавления напоминания
+async def reminder_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    try:
+        # Ожидается формат: "/reminder 16.11.2024 18:30 Напомни выпить воды"
+        command = update.message.text.split(" ", 2)
+        reminder_time = datetime.strptime(command[1], "%d.%m.%Y %H:%M")
+        message = command[2]
+
+        # Сохраняем напоминание
+        add_reminder(user_id, reminder_time.strftime("%Y-%m-%d %H:%M:%S"), message)
+        await update.message.reply_text(f"Напоминание добавлено: {message} в {reminder_time}.")
+    except (IndexError, ValueError):
+        await update.message.reply_text("Неправильный формат. Используй: /reminder DD.MM.YYYY HH:MM Текст")
+
+# Проверка напоминаний
+async def check_reminders(application):
+    while True:
+        reminders = get_due_reminders()
+        for reminder in reminders:
+            reminder_id, user_id, message = reminder
+            try:
+                # Отправляем напоминание пользователю
+                await application.bot.send_message(chat_id=user_id, text=f"Напоминание: {message}")
+            except Exception as e:
+                print(f"Ошибка при отправке сообщения: {e}")
+            finally:
+                # Удаляем напоминание после отправки
+                delete_reminder(reminder_id)
+        await asyncio.sleep(60)  # Проверяем раз в минуту
+
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
