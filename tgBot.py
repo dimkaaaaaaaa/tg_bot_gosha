@@ -4,10 +4,10 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Callbac
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 import currentTime
-import currentWeather
+import currentWeather, userCities
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-user_cities = {}  # Словарь для хранения городов пользователей
+user_cities = userCities.user_cities # Словарь для хранения городов пользователей
 
 # Логирование
 logging.basicConfig(
@@ -49,7 +49,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data["awaiting_city"] = True
     elif context.user_data.get("awaiting_city"):
         new_city = text
+        #user_cities[user_id] = new_city
         user_cities[user_id] = new_city
+        userCities.save_user_cities(user_cities)  # Сохраняем изменения
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город изменен на: {new_city}.")
     else:
