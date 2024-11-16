@@ -87,8 +87,8 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reminder_time_str = parts[1]  # Дата и время
         reminder_message = parts[2]   # Сообщение
 
-        # Преобразуем строку в объект datetime
-        reminder_time = datetime.strptime(reminder_time_str, "%Y-%m-%d %H:%M")
+        # Преобразуем строку в объект datetime, учитывая формат "DD.MM.YYYY HH:MM"
+        reminder_time = datetime.strptime(reminder_time_str, "%d.%m.%Y %H:%M")
 
         # Добавляем напоминание в список
         reminders.append({
@@ -98,9 +98,9 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         })
 
         # Ответ пользователю
-        await update.message.reply_text(f"Напоминание установлено на {reminder_time.strftime('%Y-%m-%d %H:%M')} с сообщением: {reminder_message}")
-    except Exception as e:
-        await update.message.reply_text(f"Ошибка при обработке напоминания: {str(e)}")
+        await update.message.reply_text(f"Напоминание установлено на {reminder_time.strftime('%d.%m.%Y %H:%M')} с сообщением: {reminder_message}")
+    except ValueError as e:
+        await update.message.reply_text(f"Ошибка при обработке напоминания: {str(e)}. Убедитесь, что дата и время указаны в формате: DD.MM.YYYY HH:MM.")
 
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
