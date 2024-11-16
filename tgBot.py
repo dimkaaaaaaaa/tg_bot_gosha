@@ -72,7 +72,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         weather = currentWeather.get_weather(city)
         await query.message.reply_text(weather)
     elif callback_data == "change_city":
-        await query.message.reply_text("Напишите название нового города на английском языке.")
+        await query.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
 
 # Функция для старта
