@@ -1,15 +1,14 @@
 import os
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Bot
+import asyncio
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-from datetime import datetime, timedelta
+from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime
 import currentWeather
-import time, sched, asyncio
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-bot = Bot(token=TOKEN)
 
 # Логирование
 logging.basicConfig(
@@ -17,35 +16,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-scheduler = sched.scheduler(time.time, time.sleep) # инициал планировщика
-user_events = {} # словарь для хранения событий юзеров
 
-# Функция отправки напоминания
-async def send_reminder(chat_id, event_name):
-    await bot.send_message(chat_id=chat_id, text=f"Напоминание: время для события '{event_name}'!")
-
-# Планируем напоминание
-async def schedule_reminder(event_name, event_time, chat_id):
-    delay = (event_time - datetime.now()).total_seconds()
-    if delay > 0:
-        await asyncio.sleep(delay)  # Задержка до времени события
-        await send_reminder(chat_id, event_name)  # Отправляем напоминание
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.message.chat_id
     global user_cities
     user_id = update.message.from_user.id
     text = update.message.text
-    event_details = text.split(" ")
 
     # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
     if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
         keyboard = [
             [InlineKeyboardButton("Текущее время", callback_data="time")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-            [InlineKeyboardButton("Изменить город", callback_data="change_city")],
-            [InlineKeyboardButton("Просмотреть события", callback_data="view_event")]
+            [InlineKeyboardButton("Изменить город", callback_data="change_city")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
@@ -70,39 +54,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         save_user_city(user_id, text)
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город сохранен: {text}.")
-
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
-
-async def remind_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.message.chat_id
-    user_id = update.message.from_user.id
-    text = update.message.text
-    event_details = text.split(" ")
-    if len(event_details) != 4:
-        await update.message.reply_text("Неверный формат! Введите данные в следующем формате:\n/event Название_события Дата Время")
-        return
-    event_name, event_date, event_time = event_details[1], event_details[2], event_details[3]
-    # формируем полную строку времени
-    event_datetime_str = f"{event_date} {event_time}"
-    event_datetime = datetime.strptime(event_datetime_str, "%Y-%m-%d %H:%M")
-    #сохраняем событие
-    user_events[chat_id] = {
-        'event_name' : event_name,
-        'event_datetime' : event_datetime
-    }
-    # планируем напоминание
-    schedule_reminder(event_name, event_datetime, chat_id)
-    # подтверждение от бота
-    await update.message.reply_text(f"Событие '{event_name}' запланировано на {event_datetime}. Я напомню вам об этом!")
 
 # Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query: CallbackQuery = update.callback_query
     await query.answer()
-
-    chat_id = query.from_user.id
-    callback_data = query.data
 
     user_id = update.callback_query.from_user.id
     callback_data = query.data
@@ -118,22 +76,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif callback_data == "change_city":
         await query.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
-    elif callback_data == "view_event":
-        event = user_events.get(chat_id)
-        if event:
-            event_name = event['event_name']
-            event_datetime = event['event_datetime']
-            await query.message.reply_text(f"Ваше событие: {event_name} на {event_datetime}")
-        else:
-            await query.message.reply_text("У вас нет запланированных событий")
 
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
         [InlineKeyboardButton("Текущее время", callback_data="time")],
         [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-        [InlineKeyboardButton("Изменить город", callback_data="change_city")],
-        [InlineKeyboardButton("Просмотреть события", callback_data="view_event")]
+        [InlineKeyboardButton("Изменить город", callback_data="change_city")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
@@ -150,9 +99,13 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
 
-    application.add_handler(CommandHandler("event", remind_event))
-
     application.run_polling()
+
+    # Добавляем команды
+    application.add_handler(CommandHandler("reminder", reminder_command))
+
+    # Запускаем проверку напоминаний
+    asyncio.create_task(check_reminders(application))
 
 if __name__ == "__main__":
     main()
