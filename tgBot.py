@@ -27,18 +27,28 @@ scheduler = AsyncIOScheduler()
 scheduler.start()
 
 # Функ для загрузки напоминаний из файла
+# Функция для загрузки напоминаний из файла
 def load_reminders():
     global reminders
-    try:
-        with open("reminders.json", "r") as f:
-            reminders = json.load(f)
-    except FileNotFoundError:
+    if not os.path.exists("reminders.json"):  # Если файл не существует
+        with open("reminders.json", "w") as f:
+            json.dump({}, f)  # Создаём пустой JSON файл
         reminders = {}
+    else:
+        try:
+            with open("reminders.json", "r") as f:
+                content = f.read().strip()
+                if content:
+                    reminders = json.loads(content)
+                else:
+                    reminders = {}
+        except json.JSONDecodeError:
+            reminders = {}
 
 # Функ для сохр напоминаний в файл
 def save_reminders():
     with open("reminders.json", "w") as f:
-        json.dump(reminders, f)
+        json.dump(reminders, f, indent=4)
 
 # Функ для напоминания
 async def send_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int, message: str):
