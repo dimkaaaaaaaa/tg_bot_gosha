@@ -83,7 +83,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         keyboard = [
             [InlineKeyboardButton("Текущее время", callback_data="time")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-            [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+            [InlineKeyboardButton("Изменить город", callback_data="change_city")],
+            [InlineKeyboardButton("Добавить напоминание", callback_data="reminder")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
@@ -92,23 +93,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return  # Завершаем функцию, чтобы не выводить лишнее сообщение
 
-    # Если не "Привет", продолжаем выполнять остальные действия
-    if text.lower() in ["текущее время", "время", "time"]:
-        city = user_cities.get(user_id, "Moscow")
-        current_time = currentTime.get_current_time(city)
-        await update.message.reply_text(f"Текущее время в {city}: {current_time}")
-    elif text.lower() in ["погода в моем городе", "погода"]:
-        city = user_cities.get(user_id, "Moscow")
-        weather = currentWeather.get_weather(city)
-        await update.message.reply_text(weather)
-    elif text.lower() in ["изменить город"]:
-        await update.message.reply_text("Напишите название нового города на английском языке.")
-        context.user_data["awaiting_city"] = True
-    elif context.user_data.get("awaiting_city"):
-        new_city = text
-        user_cities[user_id] = new_city
-        context.user_data["awaiting_city"] = False
-        await update.message.reply_text(f"Ваш город изменен на: {new_city}.")
+    # Обработка команды добавления напоминания
+    if text.lower().startswith("/reminder"):
+        await set_reminder(update, context)
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
 
@@ -131,13 +118,16 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif callback_data == "change_city":
         await query.message.reply_text("Напишите название нового города на английском языке.")
         context.user_data["awaiting_city"] = True
+    elif callback_data == "reminder":
+        await query.message.reply_text("Введите команду в формате: /reminder <дата и время> <сообщение>.")
 
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
         [InlineKeyboardButton("Текущее время", callback_data="time")],
         [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-        [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+        [InlineKeyboardButton("Изменить город", callback_data="change_city")],
+        [InlineKeyboardButton("Добавить напоминание", callback_data="reminder")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
@@ -153,6 +143,9 @@ def main():
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
+
+    # Загрузка напоминаний из файла при старте
+    load_reminders()
 
     application.run_polling()
 
