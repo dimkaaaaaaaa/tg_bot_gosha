@@ -1,14 +1,15 @@
 import os
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-from datetime import datetime
+from datetime import datetime, timedelta
 from database import get_user_city, save_user_city
 import currentTime
 import currentWeather
+import time, sched
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-#user_cities = {} # Словарь для хранения городов пользователей'
+bot = Bot(token=TOKEN)
 
 # Логирование
 logging.basicConfig(
@@ -16,11 +17,44 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+scheduler = sched.scheduler(time.time, time.sleep) # инициал планировщика
+user_events = {} # словарь для хранения событий юзеров
+
+# функ для отправки напоминания
+def send_reminder(chat_id, event_name):
+    bot.send_message(chat_id=chat_id, text=f"Напоминание: время для события '{event_name}'!")
+# функ планиорования напоминания
+def schedule_reminder(event_name, event_time, chat_id):
+    # задержка в сек
+    delay = (event_time - datetime.now()).total_seconds()
+
+    #планируем напоминание
+    scheduler.enter(delay, 1, send_reminder, argument=(chat_id, event_name))
+
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.message.chat_id
     global user_cities
     user_id = update.message.from_user.id
     text = update.message.text
+    event_details = text.split(" ")
+
+    if len(event_details) != 4:
+        await update.message.reply_text("Неверный формат! Введите данные в следующем формате:\n/event Название_события Дата Время")
+        return
+    event_name, event_date, event_time = event_details[1], event_details[2], event_details[3]
+    # формируем полную строку времени
+    event_datetime_str = f"{event_date} {event_time}"
+    event_datetime = datetime.strptime(event_datetime_str, "%Y-%m-%d %H:%M")
+    #сохраняем событие
+    user_events[chat_id] = {
+        'event_name' : event_name,
+        'event_datetime' : event_datetime
+    }
+    # планируем напоминание
+    schedule_reminder(event_name, event_datetime, chat_id)
+    # подтверждение от бота
+    await update.message.reply_text(f"Событие '{event_name}' запланировано на {event_datetime}. Я напомню вам об этом!")
 
     # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
     if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
@@ -96,6 +130,8 @@ def main():
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
+
+    application.add_handler(CommandHandler("event", handle_message))
 
     application.run_polling()
 
