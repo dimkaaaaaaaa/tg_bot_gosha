@@ -6,14 +6,71 @@ from datetime import datetime
 import currentTime
 import currentWeather
 
+# Для напоминаний
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.date import DateTrigger
+import json
+
+
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 user_cities = {}  # Словарь для хранения городов пользователей
+reminders = {} # Словарь для хранения напоминаний
 
 # Логирование
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Инициализация планировщика
+scheduler = AsyncIOScheduler()
+scheduler.start()
+
+# Функ для загрузки напоминаний из файла
+def load_reminders():
+    global reminders
+    try:
+        with open("reminders.json", "r") as f:
+            reminders = json.load(f)
+    except FileNotFoundError:
+        reminders = {}
+
+# Функ для сохр напоминаний в файл
+def save_reminders():
+    with open("reminders.json", "w") as f:
+        json.dump(reminders, f)
+
+# Функ для напоминания
+async def send_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int, message: str):
+    await update.message.reply_text(f"Напоминание: {message}")
+    if user_id in reminders:
+        del reminders[user_id] # Удалить напоминание после отправки
+    save_reminders()
+
+# Функ для добавления напоминания
+async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    text = update.message.text
+    if len(text.split()) < 3:
+        await update.message.reply_text("Пожалуйста, введите команду в формате: /reminder <дата и время> <сообщение>")
+        return
+    
+    time_str = text.split(' ', 2)[1]
+    message = text.split(' ', 2)[2]
+
+    try:
+        reminder_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M")
+    except ValueError:
+        await update.message.reply_text("Неверный формат времени. Используйте формат: YYYY-MM-DD HH:MM")
+        return
+    
+    trigger = DateTrigger(run_date=reminder_time)
+    scheduler.add_job(send_reminder, trigger, args=[update, context, user_id, message])
+
+    reminders[user_id] = {"time": reminder_time.strftime("%Y-%m-%d %H:%M"), "message": message}
+    save_reminders()
+
+    await update.message.reply_text(f"Напоминание установлено на {reminder_time.strftime('%Y-%m-%d %H:%M')}")
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
