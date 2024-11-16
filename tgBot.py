@@ -100,6 +100,6 @@ def main():
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
 
     application.run_polling()
-
+#
 if __name__ == "__main__":
     main()
