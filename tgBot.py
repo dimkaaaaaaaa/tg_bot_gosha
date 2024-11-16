@@ -38,11 +38,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Если не "Привет", продолжаем выполнять остальные действия
     if text.lower() in ["текущее время", "время", "time", "врем", "времяя", "времс", "врамс", "врему", "времени", "време", "вр"]:
-        city = user_cities.get(user_id, "Moscow")
+        city = get_user_city(user_id) or "Moscow"
         current_time = currentTime.get_current_time(city)
         await update.message.reply_text(f"Текущее время в {city}: {current_time}")
     elif text.lower() in ["погода в моем городе", "погода", "погод", "пог", "пг", "погад", "пагод", "погоды", "погоде", "погоду"]:
-        city = user_cities.get(user_id, "Moscow")
+        city = get_user_city(user_id) or "Moscow"
         weather = currentWeather.get_weather(city)
         await update.message.reply_text(weather)
     elif text.lower() in ["изменить город", "поменять город", "город", "гр"]:
