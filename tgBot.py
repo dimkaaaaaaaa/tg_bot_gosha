@@ -8,7 +8,6 @@ import currentTime
 import currentWeather
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-#user_cities = {} # Словарь для хранения городов пользователей'
 
 # Логирование
 logging.basicConfig(
@@ -99,6 +98,5 @@ def main():
 
     application.run_polling()
 
-# комментарий
 if __name__ == "__main__":
     main()
