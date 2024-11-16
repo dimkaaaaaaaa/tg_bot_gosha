@@ -61,7 +61,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         keyboard = [
             [InlineKeyboardButton("Текущее время", callback_data="time")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-            [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+            [InlineKeyboardButton("Изменить город", callback_data="change_city")],
+            [InlineKeyboardButton("Просмотреть события", callback_data="view_event")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
@@ -94,6 +95,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     query: CallbackQuery = update.callback_query
     await query.answer()
 
+    chat_id = query.from_user.id
+    callback_data = query.data
+
     user_id = update.callback_query.from_user.id
     callback_data = query.data
 
@@ -108,13 +112,22 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif callback_data == "change_city":
         await query.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
+    elif callback_data == "view_event":
+        event = user_events.get(chat_id)
+        if event:
+            event_name = event['event_name']
+            event_datetime = event['event_datetime']
+            await query.message.reply_text(f"Ваше событие: {event_name} на {event_datetime}")
+        else:
+            await query.message.reply_text("У вас нет запланированных событий")
 
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
         [InlineKeyboardButton("Текущее время", callback_data="time")],
         [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-        [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+        [InlineKeyboardButton("Изменить город", callback_data="change_city")],
+        [InlineKeyboardButton("Просмотреть события", callback_data="view_event")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
