@@ -20,16 +20,16 @@ logger = logging.getLogger(__name__)
 scheduler = sched.scheduler(time.time, time.sleep) # инициал планировщика
 user_events = {} # словарь для хранения событий юзеров
 
-# функ для отправки напоминания
-def send_reminder(chat_id, event_name):
-    bot.send_message(chat_id=chat_id, text=f"Напоминание: время для события '{event_name}'!")
-# функ планиорования напоминания
-def schedule_reminder(event_name, event_time, chat_id):
-    # задержка в сек
-    delay = (event_time - datetime.now()).total_seconds()
+# Функция отправки напоминания
+async def send_reminder(chat_id, event_name):
+    await bot.send_message(chat_id=chat_id, text=f"Напоминание: время для события '{event_name}'!")
 
-    #планируем напоминание
-    scheduler.enter(delay, 1, send_reminder, argument=(chat_id, event_name))
+# Планируем напоминание
+async def schedule_reminder(event_name, event_time, chat_id):
+    delay = (event_time - datetime.now()).total_seconds()
+    if delay > 0:
+        await asyncio.sleep(delay)  # Задержка до времени события
+        await send_reminder(chat_id, event_name)  # Отправляем напоминание
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -141,11 +141,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
-def run_scheluder():
-    while True:
-        scheduler.run(blocking=False)
-        time.sleep(1)
-
 # Функция запуска бота
 def main():
     application = ApplicationBuilder().token(TOKEN).build()
@@ -159,8 +154,5 @@ def main():
 
     application.run_polling()
 
-asyncio.create_task(run_scheluder())
-
-# комментарий
 if __name__ == "__main__":
     main()
