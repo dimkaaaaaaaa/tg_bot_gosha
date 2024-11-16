@@ -3,11 +3,12 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
+from database import get_user_city, save_user_city
 import currentTime
 import currentWeather
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-user_cities = {} # Словарь для хранения городов пользователей
+#user_cities = {} # Словарь для хранения городов пользователей'
 
 # Логирование
 logging.basicConfig(
@@ -48,10 +49,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
     elif context.user_data.get("awaiting_city"):
-        new_city = text
-        user_cities[user_id] = new_city
+        save_user_city(user_id, text)
         context.user_data["awaiting_city"] = False
-        await update.message.reply_text(f"Ваш город изменен на: {new_city}.")
+        await update.message.reply_text(f"Ваш город сохранен: {text}.")
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
 
