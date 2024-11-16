@@ -22,7 +22,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text
 
     # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
-    if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт"]:
+    if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
         keyboard = [
             [InlineKeyboardButton("Текущее время", callback_data="time")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
@@ -36,16 +36,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return  # Завершаем функцию, чтобы не выводить лишнее сообщение
 
     # Если не "Привет", продолжаем выполнять остальные действия
-    if text.lower() in ["текущее время", "время", "time"]:
+    if text.lower() in ["текущее время", "время", "time", "врем", "времяя", "времс", "врамс", "врему", "времени", "време", "вр"]:
         city = user_cities.get(user_id, "Moscow")
         current_time = currentTime.get_current_time(city)
         await update.message.reply_text(f"Текущее время в {city}: {current_time}")
-    elif text.lower() in ["погода в моем городе", "погода"]:
+    elif text.lower() in ["погода в моем городе", "погода", "погод", "пог", "пг", "погад", "пагод", "погоды", "погоде", "погоду"]:
         city = user_cities.get(user_id, "Moscow")
         weather = currentWeather.get_weather(city)
         await update.message.reply_text(weather)
-    elif text.lower() in ["изменить город"]:
-        await update.message.reply_text("Напишите название нового города на английском языке.")
+    elif text.lower() in ["изменить город", "поменять город", "город", "гр"]:
+        await update.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
     elif context.user_data.get("awaiting_city"):
         new_city = text
