@@ -101,11 +101,5 @@ def main():
 
     application.run_polling()
 
-    # Добавляем команды
-    application.add_handler(CommandHandler("reminder", reminder_command))
-
-    # Запускаем проверку напоминаний
-    asyncio.create_task(check_reminders(application))
-
 if __name__ == "__main__":
     main()
