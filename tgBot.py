@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from database import get_user_city, save_user_city
 import currentTime
 import currentWeather
-import time, sched
+import time, sched, asyncio
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 bot = Bot(token=TOKEN)
@@ -39,23 +39,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text
     event_details = text.split(" ")
 
-    if len(event_details) != 4:
-        await update.message.reply_text("Неверный формат! Введите данные в следующем формате:\n/event Название_события Дата Время")
-        return
-    event_name, event_date, event_time = event_details[1], event_details[2], event_details[3]
-    # формируем полную строку времени
-    event_datetime_str = f"{event_date} {event_time}"
-    event_datetime = datetime.strptime(event_datetime_str, "%Y-%m-%d %H:%M")
-    #сохраняем событие
-    user_events[chat_id] = {
-        'event_name' : event_name,
-        'event_datetime' : event_datetime
-    }
-    # планируем напоминание
-    schedule_reminder(event_name, event_datetime, chat_id)
-    # подтверждение от бота
-    await update.message.reply_text(f"Событие '{event_name}' запланировано на {event_datetime}. Я напомню вам об этом!")
-
     # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
     if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
         keyboard = [
@@ -87,8 +70,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         save_user_city(user_id, text)
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город сохранен: {text}.")
+
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
+
+async def remind_event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.message.chat_id
+    user_id = update.message.from_user.id
+    text = update.message.text
+    event_details = text.split(" ")
+    if len(event_details) != 4:
+        await update.message.reply_text("Неверный формат! Введите данные в следующем формате:\n/event Название_события Дата Время")
+        return
+    event_name, event_date, event_time = event_details[1], event_details[2], event_details[3]
+    # формируем полную строку времени
+    event_datetime_str = f"{event_date} {event_time}"
+    event_datetime = datetime.strptime(event_datetime_str, "%Y-%m-%d %H:%M")
+    #сохраняем событие
+    user_events[chat_id] = {
+        'event_name' : event_name,
+        'event_datetime' : event_datetime
+    }
+    # планируем напоминание
+    schedule_reminder(event_name, event_datetime, chat_id)
+    # подтверждение от бота
+    await update.message.reply_text(f"Событие '{event_name}' запланировано на {event_datetime}. Я напомню вам об этом!")
 
 # Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -135,6 +141,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
+def run_scheluder():
+    while True:
+        scheduler.run(blocking=False)
+        time.sleep(1)
+
 # Функция запуска бота
 def main():
     application = ApplicationBuilder().token(TOKEN).build()
@@ -144,9 +155,11 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
 
-    application.add_handler(CommandHandler("event", handle_message))
+    application.add_handler(CommandHandler("event", remind_event))
 
     application.run_polling()
+
+asyncio.create_task(run_scheluder())
 
 # комментарий
 if __name__ == "__main__":
