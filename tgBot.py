@@ -99,5 +99,6 @@ def main():
 
     application.run_polling()
 
+# комментарий
 if __name__ == "__main__":
     main()
