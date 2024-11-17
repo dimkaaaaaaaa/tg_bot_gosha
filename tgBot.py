@@ -131,11 +131,7 @@ async def main():
     # запуск проверки напоминаний
     asyncio.create_task(reminder_manager.check_reminders(application))
 
-    #application.run_polling()
-    await application.initialize()
-    await application.start()
-    await application.updater.start_polling()
-    await application.stop()
+    application.run_polling()
 
 if __name__ == "__main__":
     try:
