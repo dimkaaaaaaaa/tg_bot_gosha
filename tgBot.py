@@ -132,6 +132,6 @@ async def main():
     asyncio.create_task(reminder_manager.check_reminders(application))
 
     application.run_polling()
-
+#
 if __name__ == "__main__":
     asyncio.run(main())
