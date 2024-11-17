@@ -81,9 +81,9 @@ async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # сохраняем в бд
         user_id = update.message.from_user.id
         reminder_manager.add_reminder(user_id, remind_at.strftime("%Y-%m-%d %H.%M"), reminder_text)
-        await update.message.reply_text(f"Напоминание установлено: {reminder_text} на {remind_at.strftime("%Y-%m-%d %H.%M")}")
+        await update.message.reply_text(f"Напоминание установлено: {reminder_text} на {remind_at.strftime('%Y-%m-%d %H.%M')}")
     except ValueError:
-        await update.message.reply_text(f"Неверный формат! Используйте формат: /remind YYYY-MM-DD HH.MM тект напоминания")
+        await update.message.reply_text("Неверный формат! Используйте формат: /remind YYYY-MM-DD HH.MM тект напоминания")
 
 # Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
