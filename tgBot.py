@@ -11,7 +11,7 @@ from reminders import ReminderManager
 
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-reminder_manager = ReminderManager()
+reminder_manager = ReminderManager("reminders.db")
 
 # Логирование
 logging.basicConfig(

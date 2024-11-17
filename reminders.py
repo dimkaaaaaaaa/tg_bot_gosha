@@ -1,11 +1,27 @@
 import sqlite3
 from datetime import datetime
 import asyncio
+import os
 
 class ReminderManager:
-    def __init__(self, db_path="reminders.db"):
-        self.db_path = db_path
-        self._init_db()
+    def __init__(self, db_path):
+        # Если база данных не существует, она будет создана
+        if not os.path.exists(db_path):
+            self.create_db(db_path)
+        self.connection = sqlite3.connect(db_path)
+
+    def create_db(self, db_path):
+        """Метод для создания базы данных и необходимых таблиц"""
+        with sqlite3.connect(db_path) as connection:
+            cursor = connection.cursor()
+            # Создаём таблицу, если её ещё нет
+            cursor.execute('''CREATE TABLE IF NOT EXISTS reminders (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                user_id INTEGER,
+                                reminder_text TEXT,
+                                remind_at TEXT
+                              )''')
+            connection.commit()
 
     def _init_db(self):
         """Инициализация бд"""
@@ -41,12 +57,9 @@ class ReminderManager:
             return cursor.fetchall()
     
     def delete_reminder(self, reminder_id):
-        """удаление напоминания из бд"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
-        conn.commit()
-        conn.close()
+        with self.connection:
+            cursor = self.connection.cursor()
+            cursor.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
 
     async def check_reminders(self, application):
         while True:
