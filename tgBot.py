@@ -7,8 +7,11 @@ from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime
 import currentWeather
+from reminders import ReminderManager
+
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
+reminder_manager = ReminderManager()
 
 # Логирование
 logging.basicConfig(
@@ -57,6 +60,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
 
+async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        # парсим арг команды
+        args = context.args
+        if len(args) < 2:
+            await update.message.reply_text("Используйте формат: /remind YYYY-MM-DD HH.MM тект напоминания")
+            return
+
+        # Извлекаем дату, время и текст напоминания
+        date_time = f"{args[0]} {args[1]}"
+        reminder_text = " ".join(args[2:])
+
+        # проверяем корректность даты и времени
+        remind_at = datetime.strptime(date_time, "%Y-%m-%d %H.%M")
+        if remind_at < date_time.now():
+            await update.message.reply_text("Дата и время должны быть в будущем!")
+            return
+
+        # сохраняем в бд
+        user_id = update.message.from_user.id
+        reminder_manager.add_reminder(user_id, remind_at.strftime("%Y-%m-%d %H.%M"), reminder_text)
+        await update.message.reply_text(f"Напоминание установлено: {reminder_text} на {remind_at.strftime("%Y-%m-%d %H.%M")}")
+    except ValueError:
+        await update.message.reply_text("Неверный формат! Используйте формат: /remind YYYY-MM-DD HH.MM тект напоминания")
+
 # Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query: CallbackQuery = update.callback_query
@@ -96,8 +124,12 @@ def main():
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
+    application.add_handler(CommandHandler("remind", set_reminder))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
+
+    # запуск проверки напоминаний
+    asyncio.create_task(reminder_manager.check_reminders(application))
 
     application.run_polling()
 
