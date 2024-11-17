@@ -38,7 +38,7 @@ class ReminderManager:
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, user_id, reminder_text FROM reminders WHERE remind_at = ?", (now))
+        cursor.execute("SELECT id, user_id, reminder_text FROM reminders WHERE remind_at = ?", (now,))
         reminders = cursor.fetchall()
         conn.close()
         return reminders
