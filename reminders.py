@@ -54,14 +54,18 @@ class ReminderManager:
     async def check_reminders(self, application):
         """проверка напоминаний и отправка сообщений"""
         while True:
-            reminders = self.get_due_reminders()
-            for reminder_id, user_id, reminder_text in reminders:
-                #отправляем увед юзеру
-                try:
-                    await application.bot.send_message(chat_id=user_id, text=f"Напоминание: {reminder_text}")
-                except Exception as e:
-                    print(f"Ошибка отправки напоминания: {e}")
+            try:
+                reminders = self.get_due_reminders()
+                for reminder in reminders:
+                    user_id = reminder[1]
+                    reminder_text = reminder[2]
 
-                # удаляем напоминание после отправки
-                self.delete_reminder(reminder_id)
-            await asyncio.sleep(60)
+                    # Отправка уведомления пользователю
+                await application.bot.send_message(chat_id=user_id, text=f"Напоминание: {reminder_text}")
+
+                # Удаление напоминания из базы
+                self.delete_reminder(reminder[0])
+
+                await asyncio.sleep(60)  # Проверка каждые 60 секунд
+            except Exception as e:
+                print(f"Ошибка в check_reminders: {e}")
