@@ -34,14 +34,11 @@ class ReminderManager:
         conn.close()
 
     def get_due_reminders(self):
-        """получение напоминаний, время которых наступило"""
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, user_id, reminder_text FROM reminders WHERE remind_at = ?", (now,))
-        reminders = cursor.fetchall()
-        conn.close()
-        return reminders
+        now = datetime.now()
+        with self.connection:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT id, user_id, reminder_text FROM reminders WHERE remind_at <= ?", (now,))
+            return cursor.fetchall()
     
     def delete_reminder(self, reminder_id):
         """удаление напоминания из бд"""
@@ -52,20 +49,24 @@ class ReminderManager:
         conn.close()
 
     async def check_reminders(self, application):
-        """проверка напоминаний и отправка сообщений"""
         while True:
-            try:
-                reminders = self.get_due_reminders()
-                for reminder in reminders:
-                    user_id = reminder[1]
-                    reminder_text = reminder[2]
+            now = datetime.now()
+            reminders = self.get_due_reminders()
 
-                    # Отправка уведомления пользователю
-                await application.bot.send_message(chat_id=user_id, text=f"Напоминание: {reminder_text}")
+            for reminder in reminders:
+                # Извлечение значений из базы данных
+                reminder_id, user_id, reminder_text = reminder
 
-                # Удаление напоминания из базы
-                self.delete_reminder(reminder[0])
+                if user_id:  # Убедимся, что user_id определён
+                    # Отправка сообщения пользователю
+                    try:
+                        await application.bot.send_message(chat_id=user_id, text=f"Напоминание: {reminder_text}")
 
-                await asyncio.sleep(60)  # Проверка каждые 60 секунд
-            except Exception as e:
-                print(f"Ошибка в check_reminders: {e}")
+                        # Удаление напоминания после отправки
+                        self.delete_reminder(reminder_id)
+                    except Exception as e:
+                        await application.bot.send_message(f"Ошибка при отправке напоминания: {e}")
+                else:
+                    await application.bot.send_message(f"Пропущено напоминание с некорректным user_id: {reminder}")
+        
+            await asyncio.sleep(60)  # Проверяем напоминания каждую минуту
