@@ -119,7 +119,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 # Функция запуска бота
-def main():
+async def main():
     application = ApplicationBuilder().token(TOKEN).build()
 
     # Добавление обработчиков
@@ -134,4 +134,4 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
