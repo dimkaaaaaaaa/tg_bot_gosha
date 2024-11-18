@@ -91,6 +91,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         tasks.mark_task_done(task_id)
         await query.answer("Задача выполнена.")
         await query.edit_message_text("Задача выполнена.")
+        await query.message.reply_text("🎉")
 
     elif data.startswith("delete_"):
         task_id = int(data.split("_")[1])
