@@ -31,7 +31,7 @@ def add_task(user_id, task, description, priority="Низкий"):
 def get_tasks(user_id):
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, task FROM tasks WHERE user_id = ? AND is_done = 0", (user_id,))
+    cursor.execute("SELECT id, task priority FROM tasks WHERE user_id = ? AND is_done = 0", (user_id,))
     tasks = cursor.fetchall()
     conn.close()
     return tasks
@@ -82,7 +82,18 @@ async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Список задач пуст.")
         return
 
-    keyboard = [[InlineKeyboardButton(task, callback_data=f"view_{task_id}")] for task_id, task in tasks_i]
+    priority_emoji = {
+        'Низкий': "🟦",  # Голубой для низкого приоритета
+        'Обычный': "🟨",  # Желтый для обычного
+        'Высокий': "🟥",  # Красный для высокого
+    }
+
+    keyboard = []
+    for task_id, task, priority in tasks_i:
+        emoji = priority_emoji.get(priority, "🟨")  # Если приоритет не найден, по умолчанию желтый
+        task_text = f"{emoji} {task} ({priority})"  # Задача с эмодзи и приоритетом
+        keyboard.append([InlineKeyboardButton(task_text, callback_data=f"view_{task_id}")])
+
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
 
