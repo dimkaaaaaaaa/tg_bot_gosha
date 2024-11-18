@@ -131,13 +131,17 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif callback_data == "change_city":
         await query.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
+    elif callback_data == "tasks":
+        await update.message.reply_text("Чтобы добавить задачу используйте формат: /add Название Задачи - Описание")
+        await list_tasks(query, context)
 
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
         [InlineKeyboardButton("Текущее время", callback_data="time")],
         [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-        [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+        [InlineKeyboardButton("Изменить город", callback_data="change_city")],
+        [InlineKeyboardButton("Управление задачами", callback_data="tasks")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
