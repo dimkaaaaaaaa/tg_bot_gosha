@@ -27,10 +27,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
     if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
         keyboard = [
-            [InlineKeyboardButton("Текущее время", callback_data="time")],
+            [InlineKeyboardButton("Управление задачами", callback_data="tasks")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-            [InlineKeyboardButton("Изменить город", callback_data="change_city")],
-            [InlineKeyboardButton("Управление задачами", callback_data="tasks")]
+            [InlineKeyboardButton("Текущее время", callback_data="time")],
+            [InlineKeyboardButton("Изменить город", callback_data="change_city")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
