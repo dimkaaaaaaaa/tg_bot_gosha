@@ -1,7 +1,7 @@
 import os
 import logging
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, BotCommand
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 from database import get_user_city, save_user_city
@@ -28,7 +28,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         keyboard = [
             [InlineKeyboardButton("Текущее время", callback_data="time")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-            [InlineKeyboardButton("Изменить город", callback_data="change_city")]
+            [InlineKeyboardButton("Изменить город", callback_data="change_city")],
+            [InlineKeyboardButton("Управление задачами", callback_data="tasks")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
@@ -81,6 +82,17 @@ async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
 
+async def set_commands(application):
+    commands = [
+        BotCommand("start", "Запустить бота"),
+        BotCommand("add_task", "Добавить задачу"),
+        BotCommand("list_tasks", "Показать список задач"),
+        BotCommand("done_tasks", "Отметить задачу как выполненную"),
+        BotCommand("delete_tasks", "Удалить задачу"),
+        BotCommand("help", "Помощь"),
+    ]
+    await application.bot.set_my_commands(commands)
+
 # Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -132,7 +144,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await query.message.reply_text("Напишите название нового города.")
         context.user_data["awaiting_city"] = True
     elif callback_data == "tasks":
-        await update.message.reply_text("Чтобы добавить задачу используйте формат: /add Название Задачи - Описание")
+        await query.message.reply_text("Чтобы добавить задачу используйте формат: /add Название Задачи - Описание")
         await list_tasks(query, context)
 
 # Функция для старта
@@ -155,13 +167,15 @@ def main():
 
     application = ApplicationBuilder().token(TOKEN).build()
 
+    application.bot_data["commands"] = set_commands(application)
+
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
 
-    application.add_handler(CommandHandler("add", add))
-    application.add_handler(CommandHandler("list", list_tasks))
+    application.add_handler(CommandHandler("add_task", add))
+    application.add_handler(CommandHandler("list_tasks", list_tasks))
 
     application.run_polling()
 
