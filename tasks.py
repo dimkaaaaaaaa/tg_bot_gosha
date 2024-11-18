@@ -13,7 +13,7 @@ def init_db():
         task TEXT,
         description TEXT,
         is_done BOOLEAN DEFAULT 0,
-        priority TEXT DEFAULT 'Низкий',
+        priority TEXT DEFAULT 'Низкий'
     )
     """)
     conn.commit()
