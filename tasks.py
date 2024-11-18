@@ -98,32 +98,37 @@ async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
 
 # Команда для изменения приоритета задачи
-async def change_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.chat_id
-    if len(context.args) != 2:
-        await update.message.reply_text("Используйте формат: /change_priority Название задачи - Низкий/Обычный/Высокий")
-        return
-    task_name = context.args[0]
-    new_priority = context.args[1].capitalize()
-    if new_priority not in ['Низкий', 'Обычный', 'Высокий']:
-        await update.message.reply_text("Приоритет должен быть одним из следующих: Низкий, Обычный, Высокий")
+async def set_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-    # поиск задачи по названию
+    task_id = int(query.data.split('_')[3])  # Получаем ID задачи
+    new_priority = query.data.split('_')[2].capitalize()
+
+    # Обновление приоритета в базе данных
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM tasks WHERE user_id = ? AND task = ?", (user_id, task_name))
-    task = cursor.fetchone()
-
-    if task is None:
-        await update.message.reply_text(f"Задача с названием '{task_name}' не найдена.")
-        conn.close()
-        return
-    
-    task_id = task[0]
-
-    # обнова приоритета задачи
-    cursor.execute("UPDATE tasks SET priority = ? WHERE id = ? AND user_id = ?", (new_priority, task_id, user_id))
+    cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
     conn.commit()
     conn.close()
 
-    await update.message.reply_text(f"Приоритет задачи '{task_name}' изменен на {new_priority}.")
+    await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
+
+async def change_priority_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    task_id = int(query.data.split('_')[2])  # Извлекаем ID задачи
+
+    # Кнопки для выбора приоритета
+    keyboard = [
+        [InlineKeyboardButton("Низкий", callback_data=f"set_priority_low_{task_id}")],
+        [InlineKeyboardButton("Обычный", callback_data=f"set_priority_normal_{task_id}")],
+        [InlineKeyboardButton("Высокий", callback_data=f"set_priority_high_{task_id}")],
+        [InlineKeyboardButton("Назад", callback_data=f"back_{task_id}")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        "Выберите новый приоритет для задачи:",
+        reply_markup=reply_markup
+    )
