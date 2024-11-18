@@ -117,6 +117,22 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=reply_markup
         )
 
+    elif data.startswith("set_priority_low_"):
+        query = update.callback_query
+        await query.answer()
+
+        task_id = int(query.data.split('_')[2])  # Получаем ID задачи
+        new_priority = query.data.split('_')[1].capitalize()
+
+        # Обновление приоритета в базе данных
+        conn = sqlite3.connect("tasks.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
+        conn.commit()
+        conn.close()
+
+        await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
+
     elif data == "back_to_list":
         await tasks.list_tasks(query, context)
 
@@ -148,22 +164,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет! Что хочешь сделать?",
         reply_markup=reply_markup
     )
-# Команда для изменения приоритета задачи
-async def set_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    task_id = int(query.data.split('_')[2])  # Получаем ID задачи
-    new_priority = query.data.split('_')[1].capitalize()
-
-    # Обновление приоритета в базе данных
-    conn = sqlite3.connect("tasks.db")
-    cursor = conn.cursor()
-    cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
-    conn.commit()
-    conn.close()
-
-    await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
 
 # Функция запуска бота
 def main():
