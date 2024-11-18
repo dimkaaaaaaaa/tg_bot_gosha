@@ -146,7 +146,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         conn.commit()
         conn.close()
 
-        await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
+        await query.edit_message_text(f"Приоритет задачи {task_name} изменен на {new_priority}.")
     elif data.startswith("set_priority_высокий_"):
         query = update.callback_query
         await query.answer()
@@ -161,7 +161,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         conn.commit()
         conn.close()
 
-        await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
+        await query.edit_message_text(f"Приоритет задачи {task_name} изменен на {new_priority}.")
 
     elif data == "back_to_list":
         await tasks.list_tasks(query, context)

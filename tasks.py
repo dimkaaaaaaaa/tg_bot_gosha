@@ -74,7 +74,7 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.chat_id
     args = context.args
     if len(args) < 2:
-        await update.message.reply_text("Используйте формат: /add Название Задачи - Описание - Приоритет (Низкий, Обычный, Высокий). Приоритет по умолчанию 'Низкий'.")
+        await update.message.reply_text("Используйте формат: /add Название Задачи - Описание. Приоритет по умолчанию 'Низкий'.")
         return
     task = args[0]
     description = " ".join(args[1:])
