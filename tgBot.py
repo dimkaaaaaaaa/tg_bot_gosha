@@ -105,10 +105,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         # Кнопки для выбора приоритета
         keyboard = [
-            [InlineKeyboardButton("Низкий 🟦", callback_data=f"set_priority_низкий_{task_id}")],
-            [InlineKeyboardButton("Обычный 🟨", callback_data=f"set_priority_обычный_{task_id}")],
             [InlineKeyboardButton("Высокий 🟥", callback_data=f"set_priority_высокий_{task_id}")],
-            [InlineKeyboardButton("Назад", callback_data=f"back_{task_id}")]
+            [InlineKeyboardButton("Обычный 🟨", callback_data=f"set_priority_обычный_{task_id}")],
+            [InlineKeyboardButton("Низкий 🟦", callback_data=f"set_priority_низкий_{task_id}")],
+            [InlineKeyboardButton("Назад", callback_data=f"back_to_list{task_id}")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
