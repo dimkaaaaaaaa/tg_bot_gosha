@@ -74,6 +74,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if data.startswith("view_"):
         task_id = int(data.split("_")[1])
+        user_id = update.callback_query.from_user.id
         task = tasks.get_task(user_id, task_id)
         if task:
             task_id, task_name, description, priority = task
