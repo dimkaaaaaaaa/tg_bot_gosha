@@ -153,8 +153,8 @@ async def set_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    task_id = int(query.data.split('_')[3])  # Получаем ID задачи
-    new_priority = query.data.split('_')[2].capitalize()
+    task_id = int(query.data.split('_')[2])  # Получаем ID задачи
+    new_priority = query.data.split('_')[1].capitalize()
 
     # Обновление приоритета в базе данных
     conn = sqlite3.connect("tasks.db")
