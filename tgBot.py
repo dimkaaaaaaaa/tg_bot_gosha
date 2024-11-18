@@ -117,7 +117,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=reply_markup
         )
 
-    elif data.startswith("set_priority_low_"):
+    elif data.startswith("set_priority_низкий_"):
         query = update.callback_query
         await query.answer()
 
