@@ -162,7 +162,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 # Функция запуска бота
-def main():
+async def main():
     tasks.init_db()  # Проверка и создание базы данных
 
     application = ApplicationBuilder().token(TOKEN).build()
@@ -177,9 +177,9 @@ def main():
     application.add_handler(CommandHandler("add", add))
     application.add_handler(CommandHandler("list", list_tasks))
 
-    application.add_event_handler(set_commands(application))
+    await set_commands(application)
 
-    application.run_polling()
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
