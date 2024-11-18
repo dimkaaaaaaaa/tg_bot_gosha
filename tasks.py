@@ -40,7 +40,15 @@ def get_tasks(user_id):
 def get_task(task_id):
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT task, description, priority FROM tasks WHERE id = ?", (task_id,))
+    cursor.execute("""
+    SELECT id, task, priority FROM tasks WHERE user_id = ? AND is_done = 0
+    ORDER BY
+        CASE priority
+            WHEN 'Высокий' THEN 1
+            WHEN 'Обычный' THEN 2
+            WHEN 'Низкий' THEN 3
+        END
+    """, (task_id,))
     task = cursor.fetchone()
     conn.close()
     return task
@@ -96,39 +104,3 @@ async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
-
-# Команда для изменения приоритета задачи
-async def set_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    task_id = int(query.data.split('_')[3])  # Получаем ID задачи
-    new_priority = query.data.split('_')[2].capitalize()
-
-    # Обновление приоритета в базе данных
-    conn = sqlite3.connect("tasks.db")
-    cursor = conn.cursor()
-    cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
-    conn.commit()
-    conn.close()
-
-    await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
-
-async def change_priority_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    task_id = int(query.data.split('_')[2])  # Извлекаем ID задачи
-
-    # Кнопки для выбора приоритета
-    keyboard = [
-        [InlineKeyboardButton("Низкий", callback_data=f"set_priority_low_{task_id}")],
-        [InlineKeyboardButton("Обычный", callback_data=f"set_priority_normal_{task_id}")],
-        [InlineKeyboardButton("Высокий", callback_data=f"set_priority_high_{task_id}")],
-        [InlineKeyboardButton("Назад", callback_data=f"back_{task_id}")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await query.edit_message_text(
-        "Выберите новый приоритет для задачи:",
-        reply_markup=reply_markup
-    )
