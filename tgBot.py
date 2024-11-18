@@ -79,7 +79,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             keyboard = [
                 [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
                 [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
-                [InlineKeyboardButton("Изменить приоритет", callback_data=f"change_priority_{task_id}")],
+                [InlineKeyboardButton("Изменить приоритет", callback_data=f"tasks.change_priority_{task_id}")],
                 [InlineKeyboardButton("Назад", callback_data="back_to_list")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -142,6 +142,7 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
+    application.add_handler(CommandHandler("change_priority_button", tasks.change_priority_button))
 
     application.run_polling()
 
