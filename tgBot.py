@@ -169,7 +169,7 @@ def main():
 
     application.bot_data["commands"] = set_commands(application)
 
-    # Добавление обработчиков
+    # Добавление обработчиковd
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
