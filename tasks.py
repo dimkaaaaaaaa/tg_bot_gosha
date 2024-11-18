@@ -100,7 +100,7 @@ async def change_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # поиск задачи по названию
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM tasks WHERE user_id = ? AND task ?", (user_id, task_name))
+    cursor.execute("SELECT id FROM tasks WHERE user_id = ? AND task = ?", (user_id, task_name))
     task = cursor.fetchone()
 
     if task is None:
