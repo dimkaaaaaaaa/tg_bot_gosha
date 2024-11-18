@@ -28,11 +28,11 @@ def add_task(user_id, task, description, priority="Низкий"):
     conn.close()
 
 # Получение всех задач пользователя
-def get_tasks(user_id):
+def get_tasks(user_id, task_id):
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, task, priority FROM tasks WHERE user_id = ? AND is_done = 0", (user_id,))
-    tasks = cursor.fetchall()
+    cursor.execute("SELECT id, task, priority FROM tasks WHERE user_id = ? AND id = ? AND is_done = 0", (user_id, task_id))
+    tasks = cursor.fetchone()
     conn.close()
     return tasks
 

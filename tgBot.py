@@ -74,9 +74,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if data.startswith("view_"):
         task_id = int(data.split("_")[1])
-        task = tasks.get_task(task_id)
+        task = tasks.get_task(user_id, task_id)
         if task:
-            task_name, description, priority = task
+            task_id, task_name, description, priority = task
             keyboard = [
                 [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
                 [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
@@ -85,6 +85,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await query.edit_message_text(f"Задача: {task_name}\nОписание: {description}\nПриоритет: {priority}", reply_markup=reply_markup)
+        else:
+            await query.edit_message_text("Задача не найдена")
 
     elif data.startswith("done_"):
         task_id = int(data.split("_")[1])
