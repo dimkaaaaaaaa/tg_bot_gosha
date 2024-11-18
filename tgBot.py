@@ -79,10 +79,11 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             keyboard = [
                 [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
                 [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
+                [InlineKeyboardButton("Изменить приоритет", callback_data=f"change_priority_{task_id}")],
                 [InlineKeyboardButton("Назад", callback_data="back_to_list")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.edit_message_text(f"Задача: {task_name}\nОписание: {description}", reply_markup=reply_markup)
+            await query.edit_message_text(f"Задача: {task_name}\nОписание: {description}\nПриоритет: {priority}", reply_markup=reply_markup)
 
     elif data.startswith("done_"):
         task_id = int(data.split("_")[1])
@@ -141,7 +142,6 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
-    application.add_handler(CommandHandler("change_priority", tasks.change_priority))
 
     application.run_polling()
 
