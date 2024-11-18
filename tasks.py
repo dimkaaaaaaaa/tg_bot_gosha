@@ -31,7 +31,7 @@ def add_task(user_id, task, description, priority="Низкий"):
 def get_tasks(user_id):
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, task priority FROM tasks WHERE user_id = ? AND is_done = 0", (user_id,))
+    cursor.execute("SELECT id, task, priority FROM tasks WHERE user_id = ? AND is_done = 0", (user_id,))
     tasks = cursor.fetchall()
     conn.close()
     return tasks
@@ -40,7 +40,7 @@ def get_tasks(user_id):
 def get_task(task_id):
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT task, description FROM tasks WHERE id = ?", (task_id,))
+    cursor.execute("SELECT task, description, priority FROM tasks WHERE id = ?", (task_id,))
     task = cursor.fetchone()
     conn.close()
     return task
