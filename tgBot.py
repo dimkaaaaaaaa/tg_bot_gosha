@@ -85,10 +85,10 @@ async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def set_commands(application):
     commands = [
         BotCommand("start", "Запустить бота"),
-        BotCommand("add_task", "Добавить задачу"),
-        BotCommand("list_tasks", "Показать список задач"),
-        BotCommand("done_tasks", "Отметить задачу как выполненную"),
-        BotCommand("delete_tasks", "Удалить задачу"),
+        BotCommand("add", "Добавить задачу"),
+        BotCommand("list", "Показать список задач"),
+        BotCommand("done", "Отметить задачу как выполненную"),
+        BotCommand("delete", "Удалить задачу"),
         BotCommand("help", "Помощь"),
     ]
     await application.bot.set_my_commands(commands)
@@ -174,8 +174,9 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
 
-    application.add_handler(CommandHandler("add_task", add))
-    application.add_handler(CommandHandler("list_tasks", list_tasks))
+    application.add_handler(CommandHandler("add", add))
+    application.add_handler(CommandHandler("list", list_tasks))
+    
 
     application.run_polling()
 
