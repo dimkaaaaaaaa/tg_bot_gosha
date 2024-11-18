@@ -106,8 +106,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Кнопки для выбора приоритета
         keyboard = [
             [InlineKeyboardButton("Низкий", callback_data=f"set_priority_низкий_{task_id}")],
-            [InlineKeyboardButton("Обычный", callback_data=f"set_priority_normal_{task_id}")],
-            [InlineKeyboardButton("Высокий", callback_data=f"set_priority_high_{task_id}")],
+            [InlineKeyboardButton("Обычный", callback_data=f"set_priority_обычный_{task_id}")],
+            [InlineKeyboardButton("Высокий", callback_data=f"set_priority_высокий_{task_id}")],
             [InlineKeyboardButton("Назад", callback_data=f"back_{task_id}")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -118,6 +118,36 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
 
     elif data.startswith("set_priority_низкий_"):
+        query = update.callback_query
+        await query.answer()
+
+        task_id = int(query.data.split('_')[3])  # Получаем ID задачи
+        new_priority = query.data.split('_')[2].capitalize()
+
+        # Обновление приоритета в базе данных
+        conn = sqlite3.connect("tasks.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
+        conn.commit()
+        conn.close()
+
+        await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
+    elif data.startswith("set_priority_обычный_"):
+        query = update.callback_query
+        await query.answer()
+
+        task_id = int(query.data.split('_')[3])  # Получаем ID задачи
+        new_priority = query.data.split('_')[2].capitalize()
+
+        # Обновление приоритета в базе данных
+        conn = sqlite3.connect("tasks.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
+        conn.commit()
+        conn.close()
+
+        await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
+    elif data.startswith("set_priority_высокий_"):
         query = update.callback_query
         await query.answer()
 
