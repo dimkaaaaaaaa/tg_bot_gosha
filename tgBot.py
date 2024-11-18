@@ -105,7 +105,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         # Кнопки для выбора приоритета
         keyboard = [
-            [InlineKeyboardButton("Низкий", callback_data=f"set_priority_low_{task_id}")],
+            [InlineKeyboardButton("Низкий", callback_data=f"set_priority_низкий_{task_id}")],
             [InlineKeyboardButton("Обычный", callback_data=f"set_priority_normal_{task_id}")],
             [InlineKeyboardButton("Высокий", callback_data=f"set_priority_high_{task_id}")],
             [InlineKeyboardButton("Назад", callback_data=f"back_{task_id}")]
@@ -121,8 +121,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         query = update.callback_query
         await query.answer()
 
-        task_id = int(query.data.split('_')[2])  # Получаем ID задачи
-        new_priority = query.data.split('_')[1].capitalize()
+        task_id = int(query.data.split('_')[3])  # Получаем ID задачи
+        new_priority = query.data.split('_')[2].capitalize()
 
         # Обновление приоритета в базе данных
         conn = sqlite3.connect("tasks.db")
