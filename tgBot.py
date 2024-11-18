@@ -184,10 +184,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 # Функция для старта
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
-        [InlineKeyboardButton("Текущее время", callback_data="time")],
+        [InlineKeyboardButton("Управление задачами", callback_data="tasks")],
         [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
-        [InlineKeyboardButton("Изменить город", callback_data="change_city")],
-        [InlineKeyboardButton("Управление задачами", callback_data="tasks")]
+        [InlineKeyboardButton("Текущее время", callback_data="time")],
+        [InlineKeyboardButton("Изменить город", callback_data="change_city")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
