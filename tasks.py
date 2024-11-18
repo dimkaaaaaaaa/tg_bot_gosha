@@ -99,7 +99,7 @@ async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = []
     for task_id, task, priority in tasks_i:
         emoji = priority_emoji.get(priority, "🟨")  # Если приоритет не найден, по умолчанию желтый
-        task_text = f"{emoji} {task} ({priority})"  # Задача с эмодзи и приоритетом
+        task_text = f"{task} ({priority} {emoji})"  # Задача с эмодзи и приоритетом
         keyboard.append([InlineKeyboardButton(task_text, callback_data=f"view_{task_id}")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
