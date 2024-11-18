@@ -75,7 +75,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         task_id = int(data.split("_")[1])
         task = tasks.get_task(task_id)
         if task:
-            task_name, description = task
+            task_name, description, priority = task
             keyboard = [
                 [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
                 [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
