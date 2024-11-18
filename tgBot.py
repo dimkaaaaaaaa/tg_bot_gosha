@@ -176,7 +176,8 @@ def main():
 
     application.add_handler(CommandHandler("add", add))
     application.add_handler(CommandHandler("list", list_tasks))
-    
+
+    application.add_event_handler(set_commands(application))
 
     application.run_polling()
 
