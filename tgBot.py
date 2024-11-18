@@ -72,12 +72,12 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Команда просмотра списка задач
 async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.chat_id
-    tasks = tasks.get_tasks(user_id)
-    if not tasks:
+    tasks_i = tasks.get_tasks(user_id)
+    if not tasks_i:
         await update.message.reply_text("Список задач пуст.")
         return
 
-    keyboard = [[InlineKeyboardButton(task, callback_data=f"view_{task_id}")] for task_id, task in tasks]
+    keyboard = [[InlineKeyboardButton(task, callback_data=f"view_{task_id}")] for task_id, task in tasks_i]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
 
