@@ -5,8 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Callbac
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 from database import get_user_city, save_user_city
-import currentTime
-import currentWeather
+import currentTime, currentWeather, tasks
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 
@@ -57,13 +56,69 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
 
+
+# Команда добавления задачи
+async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.chat_id
+    args = context.args
+    if len(args) < 2:
+        await update.message.reply_text("Используйте формат: /add Название Задачи - Описание")
+        return
+    task = args[0]
+    description = " ".join(args[1:])
+    tasks.add_task(user_id, task, description)
+    await update.message.reply_text(f"Задача добавлена: {task}\nОписание: {description}")
+
+# Команда просмотра списка задач
+async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.chat_id
+    tasks = tasks.get_tasks(user_id)
+    if not tasks:
+        await update.message.reply_text("Список задач пуст.")
+        return
+
+    keyboard = [[InlineKeyboardButton(task, callback_data=f"view_{task_id}")] for task_id, task in tasks]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
+
 # Обработка нажатий на кнопки
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    data = query.data
     query: CallbackQuery = update.callback_query
     await query.answer()
 
     user_id = update.callback_query.from_user.id
     callback_data = query.data
+
+    if data.startswith("view_"):
+        task_id = int(data.split("_")[1])
+        task = tasks.get_task(task_id)
+        if task:
+            task_name, description = task
+            keyboard = [
+                [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
+                [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
+                [InlineKeyboardButton("Назад", callback_data="back_to_list")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(f"Задача: {task_name}\nОписание: {description}", reply_markup=reply_markup)
+
+    elif data.startswith("done_"):
+        task_id = int(data.split("_")[1])
+        tasks.mark_task_done(task_id)
+        await query.answer("Задача выполнена.")
+        await query.edit_message_text("Задача выполнена.")
+
+    elif data.startswith("delete_"):
+        task_id = int(data.split("_")[1])
+        tasks.delete_task(task_id)
+        await query.answer("Задача удалена.")
+        await query.edit_message_text("Задача удалена.")
+
+    elif data == "back_to_list":
+        await list_tasks(query, context)
 
     if callback_data == "time":
         city = get_user_city(user_id) or "Moscow"
@@ -92,12 +147,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # Функция запуска бота
 def main():
+    tasks.init_db()  # Проверка и создание базы данных
+
     application = ApplicationBuilder().token(TOKEN).build()
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
+
+    application.add_handler(CommandHandler("add", add))
+    application.add_handler(CommandHandler("list", list_tasks))
 
     application.run_polling()
 
