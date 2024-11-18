@@ -208,7 +208,6 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
-    application.add_handler(CommandHandler("change_priority_button", tasks.change_priority_button))
 
     application.run_polling()
 
