@@ -162,14 +162,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 # Функция запуска бота
-async def main():
+def main():
     tasks.init_db()  # Проверка и создание базы данных
 
     application = ApplicationBuilder().token(TOKEN).build()
 
     application.bot_data["commands"] = set_commands(application)
 
-    # Добавление обработчиковd
+    # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
@@ -177,9 +177,7 @@ async def main():
     application.add_handler(CommandHandler("add", add))
     application.add_handler(CommandHandler("list", list_tasks))
 
-    await set_commands(application)
-
-    await application.run_polling()
+    application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
