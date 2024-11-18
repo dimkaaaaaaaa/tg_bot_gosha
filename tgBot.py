@@ -6,6 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime, currentWeather, tasks
+import sqlite3
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 
@@ -79,7 +80,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             keyboard = [
                 [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
                 [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
-                [InlineKeyboardButton("Изменить приоритет", callback_data=f"tasks.change_priority_{task_id}")],
+                [InlineKeyboardButton("Изменить приоритет", callback_data=f"change_priority_{task_id}")],
                 [InlineKeyboardButton("Назад", callback_data="back_to_list")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -96,6 +97,25 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         tasks.delete_task(task_id)
         await query.answer("Задача удалена.")
         await query.edit_message_text("Задача удалена.")
+    
+    elif data.startswith("change_priority_"):
+        query = update.callback_query
+        await query.answer()
+        task_id = int(query.data.split('_')[2])  # Извлекаем ID задачи
+
+        # Кнопки для выбора приоритета
+        keyboard = [
+            [InlineKeyboardButton("Низкий", callback_data=f"set_priority_low_{task_id}")],
+            [InlineKeyboardButton("Обычный", callback_data=f"set_priority_normal_{task_id}")],
+            [InlineKeyboardButton("Высокий", callback_data=f"set_priority_high_{task_id}")],
+            [InlineKeyboardButton("Назад", callback_data=f"back_{task_id}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await query.edit_message_text(
+            "Выберите новый приоритет для задачи:",
+            reply_markup=reply_markup
+        )
 
     elif data == "back_to_list":
         await tasks.list_tasks(query, context)
@@ -128,6 +148,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет! Что хочешь сделать?",
         reply_markup=reply_markup
     )
+# Команда для изменения приоритета задачи
+async def set_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    task_id = int(query.data.split('_')[3])  # Получаем ID задачи
+    new_priority = query.data.split('_')[2].capitalize()
+
+    # Обновление приоритета в базе данных
+    conn = sqlite3.connect("tasks.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (new_priority, task_id))
+    conn.commit()
+    conn.close()
+
+    await query.edit_message_text(f"Приоритет задачи изменен на {new_priority}.")
 
 # Функция запуска бота
 def main():
