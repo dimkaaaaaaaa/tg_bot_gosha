@@ -185,7 +185,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await query.message.reply_text("Чтобы добавить задачу используйте формат: /add Название Задачи - Описание")
         await tasks.list_tasks(query, context)
 
-# Функция для старта
+# Функция для стартаa
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
         [InlineKeyboardButton("Управление задачами", callback_data="tasks")],
