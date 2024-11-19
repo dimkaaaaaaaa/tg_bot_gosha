@@ -6,6 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime, currentWeather, tasks
+from waitTime import wait_for_specific_time
 import sqlite3
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
@@ -198,6 +199,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет! Что хочешь сделать?",
         reply_markup=reply_markup
     )
+
+    target_time = "2024-11-19 21:33"
+    wait_for_specific_time(target_time, update, context)
 
 # Функция запуска бота
 def main():
