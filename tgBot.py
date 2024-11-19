@@ -57,7 +57,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город сохранен: {text}.")
     elif text.lower() in ['задача', 'задачи', 'лист']:
-        await tasks.list_tasks(query, context)
+        await tasks.list_tasks(update, context)
     else:
         await update.message.reply_text("Выберите действие из предложенных.", reply_markup=reply_markup)
 
