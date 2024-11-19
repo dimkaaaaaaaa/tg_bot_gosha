@@ -109,7 +109,7 @@ def main():
     application.add_handler(CommandHandler("start", start))  # Команда /start
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button_callback))  # Обработчик для кнопок Inline
-    application.add_handler(CallbackQueryHandler(tasks.button_cullback_task))
+    application.add_handler(CallbackQueryHandler(tasks.button_callback_task))
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
