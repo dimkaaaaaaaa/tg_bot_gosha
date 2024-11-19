@@ -23,16 +23,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     global user_cities
     user_id = update.message.from_user.id
     text = update.message.text
-
-    # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
-    if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
-        keyboard = [
+    keyboard = [
             [InlineKeyboardButton("Управление задачами", callback_data="tasks")],
             [InlineKeyboardButton("Погода в моем городе", callback_data="weather")],
             [InlineKeyboardButton("Текущее время", callback_data="time")],
             [InlineKeyboardButton("Изменить город", callback_data="change_city")]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Проверка на команды "Привет", "Йоу", "Старт" и отправка кнопок
+    if text.lower() in ["йоу", "чувак", "васап", "гоша", "привет", "старт", "здравствуй", "добрый день", "здарова", "приветик", "хай", "здарова", "hello", "hi", "приветствую", "здорово", "гошаа", "гошааа", "георгий", "григорий", "ты", "т"]:
         await update.message.reply_text(
             "Привет! Что хочешь сделать?",
             reply_markup=reply_markup
@@ -56,11 +56,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город сохранен: {text}.")
     else:
-        await update.message.reply_text("Выберите действие из предложенных.")
-        await update.message.reply_text(
-            "Привет! Что хочешь сделать?",
-            reply_markup=reply_markup
-        )
+        await update.message.reply_text("Выберите действие из предложенных.", reply_markup=reply_markup)
 
 
 
