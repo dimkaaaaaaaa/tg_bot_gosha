@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Callbac
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 from database import get_user_city, save_user_city
-import currentTime, currentWeather, tasks
+import currentTime, currentWeather, tasks, waitTime
 import sqlite3
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
@@ -63,8 +63,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 
-
-# Обработка нажатий на кнопкиd
+# Обработка нажатий на кнопкиdg
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     user_id = query.from_user.id
@@ -199,6 +198,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
+    # Пример использования:
+    waitTime.wait_for_specific_time("2024-11-19 21:12")
+
 # Функция запуска бота
 def main():
     tasks.init_db()  # Проверка и создание базы данных
@@ -212,6 +214,7 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
+    application.add_handler(CommandHandler("wait", waitTime.wait_for_specific_time))
 
     application.run_polling()
 
