@@ -199,7 +199,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
-    target_time = "2024-11-19 21:23"
+    target_time = "2024-11-19 21:27"
     await wait_for_specific_time(target_time, update, context)
 
 # Функция запуска бота

@@ -8,6 +8,6 @@ async def wait_for_specific_time(target_time, update: Update, context: ContextTy
     await update.message.reply_text(f"Ожидание до {target_datetime}...")
     
     while datetime.now() < target_datetime:
-        await asyncio.sleep(60)  # Проверяем каждую минуту (асинхронно)
+        await asyncio.sleep(5)  # Проверяем каждую минуту (асинхронно)
 
     await update.message.reply_text("Настало время!")
