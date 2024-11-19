@@ -57,7 +57,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(f"Ваш город сохранен: {text}.")
     else:
         await update.message.reply_text("Выберите действие из предложенных.")
-        start()
+        start(update, context)
 
 
 
