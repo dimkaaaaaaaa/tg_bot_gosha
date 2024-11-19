@@ -71,6 +71,7 @@ def mark_task_done(task_id):
 
     # Команда добавления задачи
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
     user_id = update.message.chat_id
     args = context.args
     if len(args) < 2:
@@ -81,6 +82,7 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     priority = args[-1].capitalize() if len(args) > 2 else 'Низкий'
     add_task(user_id, task, description)
     await update.message.reply_text(f"Задача добавлена: {task}\nОписание: {description}")
+    await list_tasks(query, context)
 
 # Команда просмотра списка задач
 async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
