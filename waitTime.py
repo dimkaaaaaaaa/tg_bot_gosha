@@ -10,4 +10,4 @@ def wait_for_specific_time(target_time, update: Update, context: ContextTypes.DE
     while datetime.now() < target_datetime:
         time.sleep(5)  # Проверяем каждую минуту (асинхронно)
 
-    context.application.asyncio.run(update.message.reply_text("Настало время!"))
+    asyncio.run_coroutine_threadsafe(update.message.reply_text("Настало время!"), context.application.loop)
