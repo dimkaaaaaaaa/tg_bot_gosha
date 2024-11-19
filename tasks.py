@@ -93,91 +93,23 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Команда просмотра списка задач
 async def list_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message:
-        user_id = update.message.chat_id
-    elif update.callback_query:
-        user_id = update.callback_query.from_user.id
-    else:
-        return
-
+    user_id = update.message.chat_id
     tasks_i = get_tasks(user_id)
     if not tasks_i:
         await update.message.reply_text("Список задач пуст.")
         return
 
     priority_emoji = {
-        'Низкий': "🟦",
-        'Обычный': "🟨",
-        'Высокий': "🟥",
+        'Низкий': "🟦",  # Голубой для низкого приоритета
+        'Обычный': "🟨",  # Желтый для обычного
+        'Высокий': "🟥",  # Красный для высокого
     }
 
     keyboard = []
     for task_id, task, priority in tasks_i:
-        emoji = priority_emoji.get(priority, "🟨")
-        task_text = f"{task} ({priority} {emoji})"
+        emoji = priority_emoji.get(priority, "🟨")  # Если приоритет не найден, по умолчанию желтый
+        task_text = f"{task} ({priority} {emoji})"  # Задача с эмодзи и приоритетом
         keyboard.append([InlineKeyboardButton(task_text, callback_data=f"view_{task_id}")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    if update.message:
-        await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
-    elif update.callback_query:
-        await update.callback_query.edit_message_text("Ваши задачи:", reply_markup=reply_markup)
-
-# Обработчик кнопок
-async def button_callback_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user_id = query.from_user.id
-    data = query.data
-
-    await query.answer()  # Ответ пользователю, чтобы кнопка не "висела"
-
-    if data.startswith("view_"):
-        task_id = int(data.split("_")[1])
-        task = get_task(task_id)
-        if task:
-            task_name, description, priority = task
-            keyboard = [
-                [InlineKeyboardButton("Выполнить", callback_data=f"done_{task_id}")],
-                [InlineKeyboardButton("Удалить", callback_data=f"delete_{task_id}")],
-                [InlineKeyboardButton("Изменить приоритет", callback_data=f"change_priority_{task_id}")],
-                [InlineKeyboardButton("Назад", callback_data="back_to_list")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.edit_message_text(
-                f"Задача: {task_name}\nОписание: {description}\nПриоритет: {priority}",
-                reply_markup=reply_markup
-            )
-
-    elif data.startswith("done_"):
-        task_id = int(data.split("_")[1])
-        mark_task_done(task_id)
-        await query.edit_message_text("Задача выполнена.")
-
-    elif data.startswith("delete_"):
-        task_id = int(data.split("_")[1])
-        delete_task(task_id)
-        await query.edit_message_text("Задача удалена.")
-
-    elif data.startswith("change_priority_"):
-        task_id = int(data.split("_")[2])  # Извлекаем ID задачи
-        keyboard = [
-            [InlineKeyboardButton("Высокий 🟥", callback_data=f"set_priority_высокий_{task_id}")],
-            [InlineKeyboardButton("Обычный 🟨", callback_data=f"set_priority_обычный_{task_id}")],
-            [InlineKeyboardButton("Низкий 🟦", callback_data=f"set_priority_низкий_{task_id}")],
-            [InlineKeyboardButton("Назад", callback_data="back_to_list")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("Выберите новый приоритет для задачи:", reply_markup=reply_markup)
-
-    elif data.startswith("set_priority_"):
-        priority = data.split("_")[2].capitalize()
-        task_id = int(data.split("_")[3])
-        conn = sqlite3.connect("tasks.db")
-        cursor = conn.cursor()
-        cursor.execute("UPDATE tasks SET priority = ? WHERE id = ?", (priority, task_id))
-        conn.commit()
-        conn.close()
-        await query.edit_message_text(f"Приоритет задачи изменен на {priority}.")
-
-    elif data == "back_to_list":
-        await list_tasks(update, context)  # Исправленный вызов
+    await update.message.reply_text("Ваши задачи:", reply_markup=reply_markup)
