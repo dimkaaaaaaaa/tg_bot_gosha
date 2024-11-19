@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global user_cities
+    query = update.callback_query
     user_id = update.message.from_user.id
     text = update.message.text
     keyboard = [
@@ -55,6 +56,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         save_user_city(user_id, text)
         context.user_data["awaiting_city"] = False
         await update.message.reply_text(f"Ваш город сохранен: {text}.")
+    elif text.lower() in ['задача', 'задачи', 'лист']:
+        await tasks.list_tasks(query, context)
     else:
         await update.message.reply_text("Выберите действие из предложенных.", reply_markup=reply_markup)
 
