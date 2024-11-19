@@ -200,7 +200,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
-    target_time = "2024-11-19 21:41"
+    target_time = "2024-11-19 21:45"
+    await update.message.reply_text(f"Ожидание до {target_time}...")
     wait_for_specific_time(target_time, update, context)
 
 # Функция запуска бота
