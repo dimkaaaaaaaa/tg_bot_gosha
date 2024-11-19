@@ -199,6 +199,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
+#test
+
 # Функция запуска бота
 def main():
     tasks.init_db()  # Проверка и создание базы данных
