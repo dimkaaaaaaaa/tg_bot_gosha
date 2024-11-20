@@ -103,7 +103,7 @@ def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-# Обработка нажатий на кнопки
+# Обработка нажатий на кнопкиd
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     user_id = query.from_user.id
