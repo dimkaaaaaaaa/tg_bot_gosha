@@ -19,6 +19,12 @@ scheduler.start()
 user_jobs = {}
 
 
+if not asyncio.get_event_loop().is_running():
+    loop = asyncio.get_event_loop()
+else:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
 # Логирование
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -36,7 +42,7 @@ async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         # Создаем задачу
         job = scheduler.add_job(
-            lambda: asyncio.run_coroutine_threadsafe(send_notification(context, chat_id), asyncio.get_event_loop()),
+            lambda: loop.run_until_complete(send_notification(context, chat_id)),
             CronTrigger(hour=hours, minute=minutes, timezone="UTC"),
         )
         user_jobs[chat_id] = job.id
