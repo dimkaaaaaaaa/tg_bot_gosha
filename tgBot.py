@@ -39,10 +39,7 @@ async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         chat_id = update.effective_chat.id
 
-        job = scheduler.add_job(
-            lambda: asyncio.run_coroutine_threadsafe(send_notification(context, chat_id), asyncio.get_event_loop()),
-            CronTrigger(hour=hours, minute=minutes, timezone="UTC"),
-        )
+        job = scheduler.add_job(send_notification, "interval", seconds=5, args=(context.bot,))
         user_jobs[chat_id] = job.id
 
         await update.message.reply_text(f"Напоминание установлено на {time} (по UTC).")
