@@ -39,9 +39,8 @@ async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         chat_id = update.effective_chat.id
 
-        # Создаем задачу
         job = scheduler.add_job(
-            lambda: asyncio.create_task(send_notification(context, chat_id)),
+            lambda: asyncio.run_coroutine_threadsafe(send_notification(context, chat_id), asyncio.get_event_loop()),
             CronTrigger(hour=hours, minute=minutes, timezone="UTC"),
         )
         user_jobs[chat_id] = job.id
