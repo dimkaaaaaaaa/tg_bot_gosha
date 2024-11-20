@@ -69,7 +69,7 @@ async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 # Функция отправки напоминания
 async def send_reminder(chat_id: int, text: str, bot) -> None:
     """Отправка сообщения пользователю при срабатывании напоминания."""
-    await bot.send_massage(chat_id=chat_id, text=f"Напоминание: {text}")
+    await bot.send_message(chat_id=chat_id, text=f"Напоминание: {text}")
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
