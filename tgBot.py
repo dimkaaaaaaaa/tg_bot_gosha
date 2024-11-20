@@ -8,12 +8,16 @@ import currentTime, currentWeather, tasks
 import sqlite3
 import schedule, time
 from datetime import datetime, timedelta
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.date import DateTrigger
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 # Глобальный объект для планирования задач
-scheduler = AsyncIOScheduler()
+scheduler = BackgroundScheduler()
+scheduler.start()
+# Хранилище задач для пользователей
+user_jobs = {}
+
 
 # Логирование
 logging.basicConfig(
@@ -21,58 +25,34 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Команда для установки напоминания
-async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Установка времени для напоминания."""
     try:
-        # Получаем аргументы команды
-        args = context.args
-        if len(args) < 2:
-            await update.message.reply_text(
-                "Используйте формат: /reminder HH:MM Текст напоминания"
-            )
-            return
+        # Получаем время из команды
+        time = context.args[0]
+        hours, minutes = map(int, time.split(":"))
 
-        # Парсим время и текст напоминания
-        reminder_time = args[0]
-        reminder_text = " ".join(args[1:])
+        chat_id = update.effective_chat.id
 
-        # Проверка формата времени
-        try:
-            target_time = datetime.strptime(reminder_time, "%H:%M").time()
-        except ValueError:
-            await update.message.reply_text(
-                "Неверный формат времени. Используйте HH:MM, например, 14:30."
-            )
-            return
+        # Если уже есть задача для этого пользователя, удаляем её
+        if chat_id in user_jobs:
+            scheduler.remove_job(user_jobs[chat_id])
 
-        # Получаем текущую дату и время напоминания
-        now = datetime.now()
-        schedule_datetime = datetime.combine(now.date(), target_time)
-
-        # Если время уже прошло, устанавливаем на следующий день
-        if schedule_datetime <= now:
-            schedule_datetime += timedelta(days=1)
-
-        # Устанавливаем задачу
-        scheduler.add_job(
-            send_reminder,
-            trigger=DateTrigger(run_date=schedule_datetime),
-            args=[update.effective_chat.id, reminder_text, context.bot],
+        # Создаем задачу
+        job = scheduler.add_job(
+            send_notification,
+            CronTrigger(hour=hours, minute=minutes, timezone="UTC"),
+            args=[context, chat_id],
         )
+        user_jobs[chat_id] = job.id
 
-        await update.message.reply_text(
-            f"Напоминание установлено на {schedule_datetime.strftime('%d.%m.%Y %H:%M')}"
-        )
-    except Exception as e:
-        await update.message.reply_text(f"Ошибка: {e}")
+        await update.message.reply_text(f"Напоминание установлено на {time} (по UTC).")
+    except (IndexError, ValueError):
+        await update.message.reply_text("Пожалуйста, укажите время в формате HH:MM.")
 
-# Функция отправки напоминания
-async def send_reminder(chat_id: int, text: str, bot) -> None:
-    """Отправка сообщения пользователю при срабатывании напоминания."""
-    try:
-        await bot.send_message(chat_id=chat_id, text=f"Напоминание: {text}")
-    except Exception as e:
-        logging.error(f"ошибка при отправке напоминания: {e}")
+async def send_notification(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    """Отправка напоминания пользователю."""
+    await context.bot.send_message(chat_id=chat_id, text="Время настало!")
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -264,7 +244,6 @@ def main():
     tasks.init_db()  # Проверка и создание базы данных
 
     application = ApplicationBuilder().token(TOKEN).build()
-    scheduler.start()
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
@@ -273,7 +252,7 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
-    application.add_handler(CommandHandler("reminder", set_reminder))
+    application.add_handler(CommandHandler("set", set_time))
 
     application.run_polling()
 
