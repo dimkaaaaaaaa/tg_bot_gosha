@@ -11,13 +11,13 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-scheduler = BackgroundScheduler()
-scheduler.start()
+scheduler = AsyncIOScheduler()  # Use AsyncIOScheduler to handle async tasks
 
-# Хранилище задач для пользователей
-user_jobs = {}
+
+
 
 # Получите текущий цикл или создайте новый
 loop = asyncio.get_event_loop()
@@ -37,7 +37,9 @@ async def send_message_to_admin(update: Update, context: ContextTypes.DEFAULT_TY
 
 # Добавление задачи для отправки сообщения администраторам
 def schedule_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    scheduler.add_job(send_message_to_admin, IntervalTrigger(seconds=5), args=(update, context))
+    scheduler.add_job(send_message_to_admin, IntervalTrigger(seconds=5), args=(update, context), max_instances=1)
+    
+scheduler.start()
 
 
 
