@@ -2,13 +2,16 @@ import os
 import logging
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler, Updater
 from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime, currentWeather, tasks
 import sqlite3
+import schedule, time
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
+updater = Updater(token=TOKEN, use_context=True)
+dispatcher = updater.dispatcher
 
 # Логирование
 logging.basicConfig(
@@ -61,6 +64,42 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Выберите действие из предложенных.", reply_markup=reply_markup)
 
+
+# Функция для отправки сообщения
+def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id  # Вставьте сюда ваш chat_id
+    message = "Время настало!"
+    update.message.reply_text(chat_id=chat_id, text=message)
+
+# Функция для установки времени и даты
+def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        args = context.args
+        if len(args) != 2:
+            update.message.reply_text('Используйте команду в формате /set_time HH:MM DD-MM-YYYY')
+            return
+
+        time_str = args[0]
+        date_str = args[1]
+        schedule_time = f"{date_str} {time_str}"
+
+        # Преобразование строки в объект datetime
+        schedule_datetime = datetime.strptime(schedule_time, '%d-%m-%Y %H:%M')
+        now = datetime.now()
+
+        if schedule_datetime < now:
+            update.message.reply_text('Время и дата должны быть в будущем.')
+            return
+
+        # Разница во времени
+        delay = (schedule_datetime - now).total_seconds()
+
+        # Установка задачи
+        schedule.every(delay).seconds.do(send_message, context)
+        update.message.reply_text(f'Сообщение будет отправлено в {schedule_time}')
+
+    except Exception as e:
+        update.message.reply_text(f'Ошибка: {e}')
 
 
 
@@ -214,6 +253,11 @@ def main():
     application.add_handler(CommandHandler("list", tasks.list_tasks))
 
     application.run_polling()
+    dispatcher.add_handler(CommandHandler('set_time', set_time))
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
 
 if __name__ == "__main__":
     main()
