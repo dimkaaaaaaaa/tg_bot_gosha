@@ -57,7 +57,7 @@ async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         scheduler.add_job(
             send_reminder,
             trigger=DateTrigger(run_date=schedule_datetime),
-            args=[update.effective_chat.id, reminder_text],
+            args=[update.effective_chat.id, reminder_text, context.bot],
         )
 
         await update.message.reply_text(
@@ -67,10 +67,9 @@ async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text(f"Ошибка: {e}")
 
 # Функция отправки напоминания
-async def send_reminder(chat_id: int, text: str) -> None:
+async def send_reminder(chat_id: int, text: str, bot) -> None:
     """Отправка сообщения пользователю при срабатывании напоминания."""
-    app = ApplicationBuilder().token(TOKEN).build()
-    await app.bot.send_message(chat_id=chat_id, text=f"Напоминание: {text}")
+    await bot.send_massage(chat_id=chat_id, text=f"Напоминание: {text}")
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -271,9 +270,9 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
+    application.add_handler(CommandHandler("reminder", set_reminder))
 
     application.run_polling()
-    application.add_handler(CommandHandler("reminder", set_reminder))
 
 if __name__ == "__main__":
     main()
