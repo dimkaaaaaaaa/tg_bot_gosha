@@ -18,10 +18,9 @@ scheduler.start()
 # Хранилище задач для пользователей
 user_jobs = {}
 
-
-if not asyncio.get_event_loop().is_running():
-    loop = asyncio.get_event_loop()
-else:
+# Получите текущий цикл или создайте новый
+loop = asyncio.get_event_loop()
+if loop.is_running():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
