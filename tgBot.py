@@ -14,6 +14,7 @@ from apscheduler.triggers.date import DateTrigger
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 # Глобальный объект для планирования задач
 scheduler = AsyncIOScheduler()
+scheduler.start()
 
 # Логирование
 logging.basicConfig(
@@ -69,7 +70,10 @@ async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 # Функция отправки напоминания
 async def send_reminder(chat_id: int, text: str, bot) -> None:
     """Отправка сообщения пользователю при срабатывании напоминания."""
-    await bot.send_message(chat_id=chat_id, text=f"Напоминание: {text}")
+    try:
+        await bot.send_message(chat_id=chat_id, text=f"Напоминание: {text}")
+    except Exception as e:
+        logging.error(f"ошибка при отправке напоминания: {e}")
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
