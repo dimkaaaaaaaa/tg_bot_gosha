@@ -9,12 +9,13 @@ import sqlite3
 import schedule, time
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-# Глобальный объект для планирования задач
 scheduler = BackgroundScheduler()
 scheduler.start()
+
 # Хранилище задач для пользователей
 user_jobs = {}
 
@@ -29,6 +30,15 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+async def send_message_to_admin(bot, config):
+    """Отправка сообщения администраторам."""
+    for admin_id in config.tg_bot.admin_ids:
+        await bot.send_message(chat_id=admin_id, text="Сообщение по таймеру")
+
+# Добавление задачи для отправки сообщения администраторам
+def schedule_admin_message(bot, config):
+    scheduler.add_job(send_message_to_admin, IntervalTrigger(seconds=5), args=(bot, config))
 
 async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Установка времени для напоминания."""
@@ -49,7 +59,6 @@ async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def send_notification(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
     """Отправка напоминания пользователю."""
     await context.bot.send_message(chat_id=chat_id, text="Время настало!")
-
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global user_cities
