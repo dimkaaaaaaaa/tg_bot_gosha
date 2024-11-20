@@ -3,15 +3,17 @@ import logging
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler, Updater
-from datetime import datetime
 from database import get_user_city, save_user_city
 import currentTime, currentWeather, tasks
 import sqlite3
 import schedule, time
+from datetime import datetime, timedelta
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.date import DateTrigger
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-updater = Updater(token=TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+# Глобальный объект для планирования задач
+scheduler = AsyncIOScheduler()
 
 # Логирование
 logging.basicConfig(
@@ -19,7 +21,56 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Команда для установки напоминания
+async def set_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    try:
+        # Получаем аргументы команды
+        args = context.args
+        if len(args) < 2:
+            await update.message.reply_text(
+                "Используйте формат: /reminder HH:MM Текст напоминания"
+            )
+            return
 
+        # Парсим время и текст напоминания
+        reminder_time = args[0]
+        reminder_text = " ".join(args[1:])
+
+        # Проверка формата времени
+        try:
+            target_time = datetime.strptime(reminder_time, "%H:%M").time()
+        except ValueError:
+            await update.message.reply_text(
+                "Неверный формат времени. Используйте HH:MM, например, 14:30."
+            )
+            return
+
+        # Получаем текущую дату и время напоминания
+        now = datetime.now()
+        schedule_datetime = datetime.combine(now.date(), target_time)
+
+        # Если время уже прошло, устанавливаем на следующий день
+        if schedule_datetime <= now:
+            schedule_datetime += timedelta(days=1)
+
+        # Устанавливаем задачу
+        scheduler.add_job(
+            send_reminder,
+            trigger=DateTrigger(run_date=schedule_datetime),
+            args=[update.effective_chat.id, reminder_text],
+        )
+
+        await update.message.reply_text(
+            f"Напоминание установлено на {schedule_datetime.strftime('%d.%m.%Y %H:%M')}"
+        )
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка: {e}")
+
+# Функция отправки напоминания
+async def send_reminder(chat_id: int, text: str) -> None:
+    """Отправка сообщения пользователю при срабатывании напоминания."""
+    app = ApplicationBuilder().token(TOKEN).build()
+    await app.bot.send_message(chat_id=chat_id, text=f"Напоминание: {text}")
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -65,43 +116,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Выберите действие из предложенных.", reply_markup=reply_markup)
 
 
-# Функция для отправки сообщения
-def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id  # Вставьте сюда ваш chat_id
-    message = "Время настало!"
-    update.message.reply_text(chat_id=chat_id, text=message)
-
-# Функция для установки времени и даты
-def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        args = context.args
-        if len(args) != 2:
-            update.message.reply_text('Используйте команду в формате /set_time HH:MM DD-MM-YYYY')
-            return
-
-        time_str = args[0]
-        date_str = args[1]
-        schedule_time = f"{date_str} {time_str}"
-
-        # Преобразование строки в объект datetime
-        schedule_datetime = datetime.strptime(schedule_time, '%d-%m-%Y %H:%M')
-        now = datetime.now()
-
-        if schedule_datetime < now:
-            update.message.reply_text('Время и дата должны быть в будущем.')
-            return
-
-        # Разница во времени
-        delay = (schedule_datetime - now).total_seconds()
-
-        # Установка задачи
-        schedule.every(delay).seconds.do(send_message, context)
-        update.message.reply_text(f'Сообщение будет отправлено в {schedule_time}')
-
-    except Exception as e:
-        update.message.reply_text(f'Ошибка: {e}')
-
-
 
 # Обработка нажатий на кнопкиd
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -113,6 +127,11 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     user_id = update.callback_query.from_user.id
     callback_data = query.data
+
+    if query.data == "set_reminder":
+        await query.message.reply_text(
+            "Чтобы установить напоминание, отправьте команду в формате: /reminder HH:MM Текст."
+        )
 
     if data.startswith("view_"):
         task_id = int(data.split("_")[1])
@@ -243,6 +262,7 @@ def main():
     tasks.init_db()  # Проверка и создание базы данных
 
     application = ApplicationBuilder().token(TOKEN).build()
+    scheduler.start()
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
@@ -253,11 +273,7 @@ def main():
     application.add_handler(CommandHandler("list", tasks.list_tasks))
 
     application.run_polling()
-    dispatcher.add_handler(CommandHandler('set_time', set_time))
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+    application.add_handler(CommandHandler("reminder", set_reminder))
 
 if __name__ == "__main__":
     main()
