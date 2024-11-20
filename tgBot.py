@@ -34,15 +34,10 @@ async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         chat_id = update.effective_chat.id
 
-        # Если уже есть задача для этого пользователя, удаляем её
-        if chat_id in user_jobs:
-            scheduler.remove_job(user_jobs[chat_id])
-
         # Создаем задачу
         job = scheduler.add_job(
-            send_notification,
+            lambda: asyncio.run_coroutine_threadsafe(send_notification(context, chat_id), asyncio.get_event_loop()),
             CronTrigger(hour=hours, minute=minutes, timezone="UTC"),
-            args=[context, chat_id],
         )
         user_jobs[chat_id] = job.id
 
