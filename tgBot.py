@@ -14,7 +14,6 @@ from apscheduler.triggers.date import DateTrigger
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
 # Глобальный объект для планирования задач
 scheduler = AsyncIOScheduler()
-scheduler.start()
 
 # Логирование
 logging.basicConfig(
