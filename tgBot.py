@@ -6,42 +6,15 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from database import get_user_city, save_user_city
 import currentTime, currentWeather, tasks
 import sqlite3
-import schedule, time
 from datetime import datetime, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.triggers.cron import CronTrigger
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 TOKEN = "7986596049:AAFtX6g_Q4iu9GBtG31giIONkUPd9oHmcYI"
-scheduler = AsyncIOScheduler()  # Use AsyncIOScheduler to handle async tasks
-
-
-
-
-# Получите текущий цикл или создайте новый
-loop = asyncio.get_event_loop()
-if loop.is_running():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
 
 # Логирование
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-async def send_message_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Отправка сообщения администраторам."""
-    await update.message.send_message(chat_id=update.message.chat_id, text="Сообщение по таймеру")
-
-# Добавление задачи для отправки сообщения администраторам
-def schedule_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    scheduler.add_job(send_message_to_admin, IntervalTrigger(seconds=5), args=(update, context), max_instances=1)
-    
-scheduler.start()
-
-
 
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -222,9 +195,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет! Что хочешь сделать?",
         reply_markup=reply_markup
     )
-
-    
-    schedule_admin_message(update, context)
 
 # Функция запуска бота
 def main():
