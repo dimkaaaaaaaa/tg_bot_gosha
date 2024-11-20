@@ -31,34 +31,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def send_message_to_admin(bot, config):
+async def send_message_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Отправка сообщения администраторам."""
-    for admin_id in config.tg_bot.admin_ids:
-        await bot.send_message(chat_id=admin_id, text="Сообщение по таймеру")
+    await update.message.send_message(chat_id=update.message.chat_id, text="Сообщение по таймеру")
 
 # Добавление задачи для отправки сообщения администраторам
-def schedule_admin_message(bot, config):
-    scheduler.add_job(send_message_to_admin, IntervalTrigger(seconds=5), args=(bot, config))
+def schedule_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    scheduler.add_job(send_message_to_admin, IntervalTrigger(seconds=5), args=(update, context))
 
-async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Установка времени для напоминания."""
-    try:
-        # Получаем время из команды
-        time = context.args[0]
-        hours, minutes = map(int, time.split(":"))
 
-        chat_id = update.effective_chat.id
 
-        job = scheduler.add_job(send_notification, "interval", seconds=5, args=(context.bot,))
-        user_jobs[chat_id] = job.id
-
-        await update.message.reply_text(f"Напоминание установлено на {time} (по UTC).")
-    except (IndexError, ValueError):
-        await update.message.reply_text("Пожалуйста, укажите время в формате HH:MM.")
-
-async def send_notification(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
-    """Отправка напоминания пользователю."""
-    await context.bot.send_message(chat_id=chat_id, text="Время настало!")
 # Обработка сообщений от пользователей
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global user_cities
@@ -114,11 +96,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     user_id = update.callback_query.from_user.id
     callback_data = query.data
-
-    if query.data == "set_reminder":
-        await query.message.reply_text(
-            "Чтобы установить напоминание, отправьте команду в формате: /reminder HH:MM Текст."
-        )
 
     if data.startswith("view_"):
         task_id = int(data.split("_")[1])
@@ -244,11 +221,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
+    
+    schedule_admin_message(update, context)
+
 # Функция запуска бота
 def main():
     tasks.init_db()  # Проверка и создание базы данных
 
     application = ApplicationBuilder().token(TOKEN).build()
+
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))  # Команда /start
@@ -257,7 +238,6 @@ def main():
 
     application.add_handler(CommandHandler("add", tasks.add))
     application.add_handler(CommandHandler("list", tasks.list_tasks))
-    application.add_handler(CommandHandler("set", set_time))
 
     application.run_polling()
 
